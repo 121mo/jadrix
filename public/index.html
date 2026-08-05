@@ -1,105 +1,262 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Jadrix ERP</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Tahoma, Arial, sans-serif;
-      background: #0f172a;
-      color: #e2e8f0;
-    }
-    header {
-      padding: 18px 24px;
-      background: #111827;
-      border-bottom: 1px solid #334155;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    h1 { margin: 0; font-size: 24px; }
-    .status {
-      background: #14532d;
-      color: #bbf7d0;
-      padding: 7px 12px;
-      border-radius: 20px;
-    }
-    main { padding: 24px; max-width: 1200px; margin: auto; }
-    .intro {
-      background: linear-gradient(135deg, #1e293b, #172554);
-      padding: 24px;
-      border-radius: 16px;
-      margin-bottom: 22px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 16px;
-    }
-    .card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 14px;
-      padding: 20px;
-      min-height: 130px;
-    }
-    .card h2 { margin-top: 0; font-size: 18px; color: #7dd3fc; }
-    .card p { color: #cbd5e1; line-height: 1.7; }
-    footer {
-      text-align: center;
-      padding: 24px;
-      color: #94a3b8;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Jadrix ERP</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Tahoma,Arial;background:#0f172a;color:#e5e7eb}
+header{background:#111827;padding:16px;display:flex;justify-content:space-between;border-bottom:1px solid #334155}
+nav{display:flex;gap:8px;padding:12px;background:#172033;overflow:auto}
+button,input,select{font:inherit}button{padding:9px 13px;border:0;border-radius:8px;background:#334155;color:#fff}
+button.active,.primary{background:#22c55e;color:#052e16;font-weight:bold}
+main{padding:16px}.page{display:none}.page.active{display:block}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:16px}
+.card h3{margin-top:0;color:#7dd3fc}
+input,select{width:100%;padding:9px;background:#0b1220;color:#fff;border:1px solid #334155;border-radius:8px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+table{width:100%;border-collapse:collapse;background:#172033}
+th,td{padding:9px;border-bottom:1px solid #334155;text-align:right}
+th{color:#7dd3fc}.tree{background:#0b1220;border:1px solid #334155;border-radius:12px;padding:10px}
+.node{padding:8px;border-radius:7px}.node:hover{background:#1e293b}
+.root{color:#fde047;font-weight:bold}.ok{color:#86efac}.bad{color:#fca5a5}
+.grid2{display:grid;grid-template-columns:1fr 300px;gap:12px}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}th,td{font-size:12px;padding:6px}}
+</style>
 </head>
 <body>
-  <header>
-    <h1>Jadrix ERP</h1>
-    <span class="status">النواة تعمل</span>
-  </header>
+<header><b>Jadrix ERP</b><span>نسخة تشغيلية</span></header>
 
-  <main>
-    <section class="intro">
-      <h2>نظام Jadrix المحاسبي والإداري</h2>
-      <p>تم إنشاء أول نسخة تشغيلية داخل المستودع الدائم للمشروع.</p>
-    </section>
+<nav>
+<button class="tab active" data-page="dashboard">لوحة التحكم</button>
+<button class="tab" data-page="accounts">شجرة الحسابات</button>
+<button class="tab" data-page="journal">القيود اليومية</button>
+<button class="tab" data-page="ledger">دفتر الأستاذ</button>
+<button class="tab" data-page="trial">ميزان المراجعة</button>
+</nav>
 
-    <section class="grid">
-      <article class="card">
-        <h2>شجرة الحسابات</h2>
-        <p>الحسابات الخمسة الرئيسية والهيكل الهرمي للحسابات.</p>
-      </article>
+<main>
+<section id="dashboard" class="page active">
+<h2>لوحة التحكم المالية</h2>
+<div class="cards">
+<div class="card"><h3>الحسابات</h3><strong id="countAccounts">0</strong></div>
+<div class="card"><h3>القيود المرحلة</h3><strong id="countEntries">0</strong></div>
+<div class="card"><h3>إجمالي المدين</h3><strong id="totalDebit">0.00</strong></div>
+<div class="card"><h3>إجمالي الدائن</h3><strong id="totalCredit">0.00</strong></div>
+</div>
+</section>
 
-      <article class="card">
-        <h2>القيود اليومية</h2>
-        <p>إنشاء ومراجعة وترحيل القيود المحاسبية.</p>
-      </article>
+<section id="accounts" class="page">
+<h2>شجرة الحسابات</h2>
+<div class="toolbar">
+<input id="search" placeholder="ابحث بالكود أو اسم الحساب">
+<button class="primary" onclick="addAccount()">إضافة حساب</button>
+</div>
+<div class="grid2">
+<div id="tree" class="tree"></div>
+<div class="card">
+<h3>تفاصيل الحساب</h3>
+<div id="details">اختر حسابًا من الشجرة</div>
+</div>
+</div>
+</section>
 
-      <article class="card">
-        <h2>دفتر الأستاذ</h2>
-        <p>عرض حركة الحسابات والأرصدة المدينة والدائنة.</p>
-      </article>
+<section id="journal" class="page">
+<h2>إنشاء قيد يومية</h2>
+<div class="card">
+<div class="toolbar">
+<input id="entryDate" type="date">
+<input id="entryMemo" placeholder="بيان القيد">
+</div>
+<table>
+<thead><tr><th>الحساب</th><th>مدين</th><th>دائن</th><th></th></tr></thead>
+<tbody id="lines"></tbody>
+</table>
+<div class="toolbar">
+<button onclick="addLine()">إضافة سطر</button>
+<button class="primary" onclick="postEntry()">ترحيل القيد</button>
+</div>
+<div id="status"></div>
+</div>
+</section>
 
-      <article class="card">
-        <h2>ميزان المراجعة</h2>
-        <p>مراجعة أرصدة الحسابات والتحقق من التوازن.</p>
-      </article>
+<section id="ledger" class="page">
+<h2>دفتر الأستاذ</h2>
+<div class="toolbar"><select id="ledgerAccount"></select></div>
+<table>
+<thead><tr><th>التاريخ</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead>
+<tbody id="ledgerRows"></tbody>
+</table>
+</section>
 
-      <article class="card">
-        <h2>الشركات والفروع</h2>
-        <p>دعم تعدد الشركات والفروع والعملات.</p>
-      </article>
+<section id="trial" class="page">
+<h2>ميزان المراجعة</h2>
+<table>
+<thead><tr><th>الكود</th><th>الحساب</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead>
+<tbody id="trialRows"></tbody>
+</table>
+</section>
+</main>
 
-      <article class="card">
-        <h2>المستخدمون والصلاحيات</h2>
-        <p>تحديد صلاحيات الإنشاء والمراجعة والاعتماد والترحيل.</p>
-      </article>
-    </section>
-  </main>
+<script>
+const initialAccounts=[
+{id:1,code:"1",name:"الأصول",parent:null,group:true,nature:"debit"},
+{id:2,code:"2",name:"الخصوم",parent:null,group:true,nature:"credit"},
+{id:3,code:"3",name:"حقوق الملكية",parent:null,group:true,nature:"credit"},
+{id:4,code:"4",name:"الإيرادات",parent:null,group:true,nature:"credit"},
+{id:5,code:"5",name:"المصاريف",parent:null,group:true,nature:"debit"},
+{id:11,code:"111",name:"الصندوق",parent:1,group:false,nature:"debit"},
+{id:12,code:"112",name:"البنك",parent:1,group:false,nature:"debit"},
+{id:21,code:"211",name:"الموردون",parent:2,group:false,nature:"credit"},
+{id:31,code:"311",name:"رأس المال",parent:3,group:false,nature:"credit"},
+{id:41,code:"411",name:"إيرادات المبيعات",parent:4,group:false,nature:"credit"},
+{id:51,code:"511",name:"مصروفات تشغيلية",parent:5,group:false,nature:"debit"}
+];
 
-  <footer>© 2026 Jadrix</footer>
+let accounts=JSON.parse(localStorage.getItem("jadrix_accounts")||"null")||initialAccounts;
+let entries=JSON.parse(localStorage.getItem("jadrix_entries")||"[]");
+
+const money=n=>Number(n||0).toLocaleString("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2});
+const save=()=>{
+ localStorage.setItem("jadrix_accounts",JSON.stringify(accounts));
+ localStorage.setItem("jadrix_entries",JSON.stringify(entries));
+};
+
+document.querySelectorAll(".tab").forEach(btn=>{
+ btn.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById(btn.dataset.page).classList.add("active");
+  refresh();
+ };
+});
+
+function renderTree(){
+ const q=document.getElementById("search").value.trim();
+ let html="";
+ function walk(parent,level){
+  accounts.filter(a=>a.parent===parent).forEach(a=>{
+   if(!q||a.code.includes(q)||a.name.includes(q)){
+    html+=`<div class="node ${level===1?"root":""}" style="padding-right:${level*15}px" onclick="showAccount(${a.id})">${a.group?"📁":"📄"} ${a.code} - ${a.name}</div>`;
+   }
+   walk(a.id,level+1);
+  });
+ }
+ walk(null,1);
+ tree.innerHTML=html||"لا توجد نتائج";
+}
+
+search.oninput=renderTree;
+
+function showAccount(id){
+ const a=accounts.find(x=>x.id===id);
+ const parent=accounts.find(x=>x.id===a.parent);
+ details.innerHTML=`<b>${a.code} - ${a.name}</b><p>النوع: ${a.group?"تجميعي":"قابل للقيد"}</p><p>الطبيعة: ${a.nature==="debit"?"مدين":"دائن"}</p><p>الحساب الأب: ${parent?.name||"—"}</p>`;
+}
+
+function addAccount(){
+ const code=prompt("أدخل كود الحساب");
+ if(!code)return;
+ if(accounts.some(a=>a.code===code)){alert("الكود مستخدم");return}
+ const name=prompt("أدخل اسم الحساب");
+ if(!name)return;
+ const parentCode=prompt("أدخل كود الحساب الأب، أو اتركه فارغًا");
+ const parent=accounts.find(a=>a.code===parentCode);
+ const group=confirm("هل الحساب تجميعي؟");
+ accounts.push({id:Date.now(),code,name,parent:parent?.id||null,group,nature:parent?.nature||"debit"});
+ save();refresh();
+}
+
+function postingAccounts(){return accounts.filter(a=>!a.group)}
+
+function addLine(){
+ const tr=document.createElement("tr");
+ tr.innerHTML=`<td><select class="acc">${postingAccounts().map(a=>`<option value="${a.id}">${a.code} - ${a.name}</option>`).join("")}</select></td>
+ <td><input class="debit" type="number" min="0" step="0.01"></td>
+ <td><input class="credit" type="number" min="0" step="0.01"></td>
+ <td><button onclick="this.closest('tr').remove()">×</button></td>`;
+ lines.appendChild(tr);
+}
+
+function postEntry(){
+ const rows=[...lines.querySelectorAll("tr")];
+ const entryLines=rows.map(r=>({
+  accountId:Number(r.querySelector(".acc").value),
+  debit:Number(r.querySelector(".debit").value||0),
+  credit:Number(r.querySelector(".credit").value||0)
+ })).filter(x=>x.debit||x.credit);
+
+ const debit=entryLines.reduce((s,x)=>s+x.debit,0);
+ const credit=entryLines.reduce((s,x)=>s+x.credit,0);
+
+ if(entryLines.length<2||Math.abs(debit-credit)>0.005){
+  status.innerHTML='<span class="bad">القيد غير متوازن أو أقل من سطرين.</span>';
+  return;
+ }
+
+ entries.push({
+  id:Date.now(),
+  date:entryDate.value,
+  memo:entryMemo.value,
+  lines:entryLines
+ });
+
+ save();
+ status.innerHTML='<span class="ok">تم ترحيل القيد بنجاح.</span>';
+ lines.innerHTML="";
+ addLine();addLine();refresh();
+}
+
+function balances(){
+ const result={};
+ postingAccounts().forEach(a=>result[a.id]={debit:0,credit:0});
+ entries.forEach(e=>e.lines.forEach(l=>{
+  if(result[l.accountId]){
+   result[l.accountId].debit+=l.debit;
+   result[l.accountId].credit+=l.credit;
+  }
+ }));
+ return result;
+}
+
+function renderTrial(){
+ const b=balances();
+ trialRows.innerHTML=postingAccounts().map(a=>{
+  const x=b[a.id];
+  return `<tr><td>${a.code}</td><td>${a.name}</td><td>${money(x.debit)}</td><td>${money(x.credit)}</td><td>${money(x.debit-x.credit)}</td></tr>`;
+ }).join("");
+}
+
+function renderLedger(){
+ ledgerAccount.innerHTML=postingAccounts().map(a=>`<option value="${a.id}">${a.code} - ${a.name}</option>`).join("");
+ ledgerAccount.onchange=renderLedgerRows;
+ renderLedgerRows();
+}
+
+function renderLedgerRows(){
+ const id=Number(ledgerAccount.value);
+ let balance=0;
+ let rows="";
+ entries.forEach(e=>e.lines.filter(l=>l.accountId===id).forEach(l=>{
+  balance+=l.debit-l.credit;
+  rows+=`<tr><td>${e.date}</td><td>${e.memo||""}</td><td>${money(l.debit)}</td><td>${money(l.credit)}</td><td>${money(balance)}</td></tr>`;
+ }));
+ ledgerRows.innerHTML=rows||'<tr><td colspan="5">لا توجد حركة</td></tr>';
+}
+
+function refresh(){
+ renderTree();renderTrial();renderLedger();
+ const b=balances();
+ countAccounts.textContent=accounts.length;
+ countEntries.textContent=entries.length;
+ totalDebit.textContent=money(Object.values(b).reduce((s,x)=>s+x.debit,0));
+ totalCredit.textContent=money(Object.values(b).reduce((s,x)=>s+x.credit,0));
+}
+
+entryDate.value=new Date().toISOString().slice(0,10);
+addLine();addLine();refresh();
+</script>
 </body>
 </html>
