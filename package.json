@@ -1,0 +1,12 @@
+{
+  "name": "jadrix",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Jadrix bilingual multi-company ERP and accounting system",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

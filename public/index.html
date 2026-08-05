@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jadrix ERP</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Tahoma, Arial, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+    header {
+      padding: 18px 24px;
+      background: #111827;
+      border-bottom: 1px solid #334155;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    h1 { margin: 0; font-size: 24px; }
+    .status {
+      background: #14532d;
+      color: #bbf7d0;
+      padding: 7px 12px;
+      border-radius: 20px;
+    }
+    main { padding: 24px; max-width: 1200px; margin: auto; }
+    .intro {
+      background: linear-gradient(135deg, #1e293b, #172554);
+      padding: 24px;
+      border-radius: 16px;
+      margin-bottom: 22px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 20px;
+      min-height: 130px;
+    }
+    .card h2 { margin-top: 0; font-size: 18px; color: #7dd3fc; }
+    .card p { color: #cbd5e1; line-height: 1.7; }
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Jadrix ERP</h1>
+    <span class="status">النواة تعمل</span>
+  </header>
+
+  <main>
+    <section class="intro">
+      <h2>نظام Jadrix المحاسبي والإداري</h2>
+      <p>تم إنشاء أول نسخة تشغيلية داخل المستودع الدائم للمشروع.</p>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>شجرة الحسابات</h2>
+        <p>الحسابات الخمسة الرئيسية والهيكل الهرمي للحسابات.</p>
+      </article>
+
+      <article class="card">
+        <h2>القيود اليومية</h2>
+        <p>إنشاء ومراجعة وترحيل القيود المحاسبية.</p>
+      </article>
+
+      <article class="card">
+        <h2>دفتر الأستاذ</h2>
+        <p>عرض حركة الحسابات والأرصدة المدينة والدائنة.</p>
+      </article>
+
+      <article class="card">
+        <h2>ميزان المراجعة</h2>
+        <p>مراجعة أرصدة الحسابات والتحقق من التوازن.</p>
+      </article>
+
+      <article class="card">
+        <h2>الشركات والفروع</h2>
+        <p>دعم تعدد الشركات والفروع والعملات.</p>
+      </article>
+
+      <article class="card">
+        <h2>المستخدمون والصلاحيات</h2>
+        <p>تحديد صلاحيات الإنشاء والمراجعة والاعتماد والترحيل.</p>
+      </article>
+    </section>
+  </main>
+
+  <footer>© 2026 Jadrix</footer>
+</body>
+</html>
