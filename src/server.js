@@ -1,35 +1,78 @@
+"use strict";
+
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
-const PORT = process.env.PORT || 3000;
-const publicDir = path.join(__dirname, "..", "public");
+const PORT = Number(process.env.PORT || 3001);
+const PUBLIC_DIR = path.resolve(__dirname, "../public");
 
-const server = http.createServer((req, res) => {
-  const requestedPath = req.url === "/" ? "/index.html" : req.url;
-  const safePath = path.normalize(requestedPath).replace(/^(\.\.[/\\])+/, "");
-  const filePath = path.join(publicDir, safePath);
+const mimeTypes = {
+  ".html": "text/html; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".js": "application/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".svg": "image/svg+xml"
+};
 
-  fs.readFile(filePath, (error, content) => {
-    if (error) {
-      res.writeHead(error.code === "ENOENT" ? 404 : 500, {
+function safeFilePath(requestUrl) {
+  const pathname = decodeURIComponent(
+    new URL(requestUrl, "http://localhost").pathname
+  );
+
+  const requestedFile = pathname === "/" ? "index.html" : pathname.slice(1);
+  const normalizedPath = path.normalize(requestedFile);
+  const fullPath = path.resolve(PUBLIC_DIR, normalizedPath);
+
+  if (!fullPath.startsWith(PUBLIC_DIR)) {
+    return null;
+  }
+
+  return fullPath;
+}
+
+const server = http.createServer((request, response) => {
+  const filePath = safeFilePath(request.url);
+
+  if (!filePath) {
+    response.writeHead(403, {
+      "Content-Type": "text/plain; charset=utf-8"
+    });
+    response.end("غير مسموح");
+    return;
+  }
+
+  fs.stat(filePath, (statError, stats) => {
+    if (statError || !stats.isFile()) {
+      response.writeHead(404, {
         "Content-Type": "text/plain; charset=utf-8"
       });
-      res.end(error.code === "ENOENT" ? "الصفحة غير موجودة" : "حدث خطأ في الخادم");
+      response.end("الصفحة غير موجودة");
       return;
     }
 
-    const extension = path.extname(filePath);
-    const contentTypes = {
-      ".html": "text/html; charset=utf-8",
-      ".css": "text/css; charset=utf-8",
-      ".js": "application/javascript; charset=utf-8"
-    };
+    fs.readFile(filePath, (readError, content) => {
+      if (readError) {
+        response.writeHead(500, {
+          "Content-Type": "text/plain; charset=utf-8"
+        });
+        response.end("حدث خطأ في الخادم");
+        return;
+      }
 
-    res.writeHead(200, {
-      "Content-Type": contentTypes[extension] || "application/octet-stream"
+      const extension = path.extname(filePath).toLowerCase();
+
+      response.writeHead(200, {
+        "Content-Type":
+          mimeTypes[extension] || "application/octet-stream",
+        "Cache-Control": "no-store"
+      });
+
+      response.end(content);
     });
-    res.end(content);
   });
 });
 

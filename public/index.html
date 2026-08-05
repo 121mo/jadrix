@@ -1,262 +1,2393 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Jadrix ERP</title>
-<style>
-*{box-sizing:border-box}body{margin:0;font-family:Tahoma,Arial;background:#0f172a;color:#e5e7eb}
-header{background:#111827;padding:16px;display:flex;justify-content:space-between;border-bottom:1px solid #334155}
-nav{display:flex;gap:8px;padding:12px;background:#172033;overflow:auto}
-button,input,select{font:inherit}button{padding:9px 13px;border:0;border-radius:8px;background:#334155;color:#fff}
-button.active,.primary{background:#22c55e;color:#052e16;font-weight:bold}
-main{padding:16px}.page{display:none}.page.active{display:block}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
-.card{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:16px}
-.card h3{margin-top:0;color:#7dd3fc}
-input,select{width:100%;padding:9px;background:#0b1220;color:#fff;border:1px solid #334155;border-radius:8px}
-.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
-table{width:100%;border-collapse:collapse;background:#172033}
-th,td{padding:9px;border-bottom:1px solid #334155;text-align:right}
-th{color:#7dd3fc}.tree{background:#0b1220;border:1px solid #334155;border-radius:12px;padding:10px}
-.node{padding:8px;border-radius:7px}.node:hover{background:#1e293b}
-.root{color:#fde047;font-weight:bold}.ok{color:#86efac}.bad{color:#fca5a5}
-.grid2{display:grid;grid-template-columns:1fr 300px;gap:12px}
-@media(max-width:700px){.grid2{grid-template-columns:1fr}th,td{font-size:12px;padding:6px}}
-</style>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1"
+  >
+  <title>Jadrix ERP</title>
+
+  <style>
+    :root {
+      --background: #07111f;
+      --sidebar: #0b1628;
+      --panel: #111e32;
+      --panel-light: #17263d;
+      --border: #263852;
+      --text: #eef5ff;
+      --muted: #9cadc3;
+      --primary: #1fbf75;
+      --primary-dark: #0d7e4a;
+      --secondary: #38bdf8;
+      --warning: #facc15;
+      --danger: #ef4444;
+      --success: #86efac;
+      --shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: var(--background);
+      color: var(--text);
+      font-family: Tahoma, Arial, sans-serif;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .topbar {
+      min-height: 64px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #081323;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 11px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: #03131d;
+      font-weight: bold;
+    }
+
+    .brand-title {
+      font-size: 21px;
+      font-weight: bold;
+    }
+
+    .brand-subtitle {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .status-badge {
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: rgba(31, 191, 117, 0.16);
+      color: var(--success);
+      border: 1px solid rgba(31, 191, 117, 0.35);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .app-layout {
+      min-height: calc(100vh - 64px);
+      display: grid;
+      grid-template-columns: 235px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      padding: 14px;
+      background: var(--sidebar);
+      border-left: 1px solid var(--border);
+    }
+
+    .nav-button {
+      width: 100%;
+      margin-bottom: 7px;
+      padding: 11px 12px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text);
+      text-align: right;
+    }
+
+    .nav-button:hover,
+    .nav-button.active {
+      background: var(--panel-light);
+      border-color: var(--border);
+    }
+
+    .nav-button.active {
+      color: #bbf7d0;
+    }
+
+    .content {
+      min-width: 0;
+      padding: 18px;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .page-header {
+      margin-bottom: 15px;
+    }
+
+    .page-header h1 {
+      margin: 0 0 5px;
+      font-size: 23px;
+    }
+
+    .page-header p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .card,
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .card {
+      min-height: 125px;
+      padding: 17px;
+    }
+
+    .card-label {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .card-value {
+      margin-top: 13px;
+      color: var(--secondary);
+      font-size: 25px;
+      font-weight: bold;
+    }
+
+    .panel {
+      padding: 15px;
+    }
+
+    .toolbar {
+      margin-bottom: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .button {
+      min-height: 39px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: #26374e;
+      color: white;
+    }
+
+    .button:hover {
+      filter: brightness(1.08);
+    }
+
+    .button.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #03291a;
+      font-weight: bold;
+    }
+
+    .button.danger {
+      background: #8f2525;
+      border-color: #b33333;
+    }
+
+    .button.small {
+      min-height: 32px;
+      padding: 5px 9px;
+      font-size: 12px;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: 40px;
+      padding: 9px 10px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      outline: none;
+      background: #081424;
+      color: var(--text);
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--secondary);
+    }
+
+    .toolbar input,
+    .toolbar select {
+      max-width: 320px;
+    }
+
+    .form-grid {
+      margin-bottom: 12px;
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .field-2 {
+      grid-column: span 2;
+    }
+
+    .field-3 {
+      grid-column: span 3;
+    }
+
+    .field-4 {
+      grid-column: span 4;
+    }
+
+    .field-6 {
+      grid-column: span 6;
+    }
+
+    .field-12 {
+      grid-column: span 12;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .split-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 12px;
+    }
+
+    .tree-container {
+      max-height: 65vh;
+      overflow: auto;
+      padding: 9px;
+      background: #07111f;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+    }
+
+    .tree-node {
+      min-height: 38px;
+      margin: 2px 0;
+      padding: 8px 9px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .tree-node:hover {
+      background: var(--panel-light);
+    }
+
+    .tree-node.selected {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+    }
+
+    .tree-node.root-account {
+      color: var(--warning);
+      font-weight: bold;
+    }
+
+    .account-details h3 {
+      margin-top: 0;
+      color: var(--secondary);
+    }
+
+    .detail-item {
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .detail-label {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .detail-value {
+      margin-top: 4px;
+    }
+
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 780px;
+      border-collapse: collapse;
+      background: var(--panel);
+    }
+
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: right;
+      vertical-align: middle;
+    }
+
+    th {
+      color: #bae6fd;
+      background: #14243a;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    td {
+      font-size: 13px;
+    }
+
+    td input,
+    td select {
+      min-width: 135px;
+    }
+
+    .empty-row {
+      padding: 25px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .message {
+      margin-top: 10px;
+      min-height: 24px;
+      color: var(--muted);
+    }
+
+    .message.success {
+      color: var(--success);
+    }
+
+    .message.error {
+      color: #fca5a5;
+    }
+
+    .status-posted {
+      color: var(--success);
+    }
+
+    .status-cancelled {
+      color: #fca5a5;
+    }
+
+    dialog {
+      width: min(94vw, 520px);
+      padding: 0;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    dialog::backdrop {
+      background: rgba(0, 0, 0, 0.65);
+    }
+
+    .dialog-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dialog-header h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .dialog-body {
+      padding: 16px;
+    }
+
+    .dialog-footer {
+      padding: 12px 16px;
+      display: flex;
+      gap: 8px;
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 1000px) {
+      .cards {
+        grid-template-columns: repeat(2, minmax(150px, 1fr));
+      }
+
+      .split-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .topbar {
+        min-height: 58px;
+      }
+
+      .app-layout {
+        display: block;
+      }
+
+      .sidebar {
+        padding: 8px;
+        display: flex;
+        overflow-x: auto;
+        border-left: 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .nav-button {
+        min-width: 145px;
+        margin: 0 4px;
+        justify-content: center;
+        white-space: nowrap;
+      }
+
+      .content {
+        padding: 12px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .field-2,
+      .field-3,
+      .field-4,
+      .field-6,
+      .field-12 {
+        grid-column: span 1;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .brand-subtitle {
+        display: none;
+      }
+
+      .status-badge {
+        font-size: 10px;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<header><b>Jadrix ERP</b><span>نسخة تشغيلية</span></header>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">J</div>
 
-<nav>
-<button class="tab active" data-page="dashboard">لوحة التحكم</button>
-<button class="tab" data-page="accounts">شجرة الحسابات</button>
-<button class="tab" data-page="journal">القيود اليومية</button>
-<button class="tab" data-page="ledger">دفتر الأستاذ</button>
-<button class="tab" data-page="trial">ميزان المراجعة</button>
-</nav>
+      <div>
+        <div class="brand-title">Jadrix ERP</div>
+        <div class="brand-subtitle">
+          النظام المحاسبي والإداري المتكامل
+        </div>
+      </div>
+    </div>
 
-<main>
-<section id="dashboard" class="page active">
-<h2>لوحة التحكم المالية</h2>
-<div class="cards">
-<div class="card"><h3>الحسابات</h3><strong id="countAccounts">0</strong></div>
-<div class="card"><h3>القيود المرحلة</h3><strong id="countEntries">0</strong></div>
-<div class="card"><h3>إجمالي المدين</h3><strong id="totalDebit">0.00</strong></div>
-<div class="card"><h3>إجمالي الدائن</h3><strong id="totalCredit">0.00</strong></div>
-</div>
-</section>
+    <div class="status-badge">نسخة تطوير تشغيلية</div>
+  </header>
 
-<section id="accounts" class="page">
-<h2>شجرة الحسابات</h2>
-<div class="toolbar">
-<input id="search" placeholder="ابحث بالكود أو اسم الحساب">
-<button class="primary" onclick="addAccount()">إضافة حساب</button>
-</div>
-<div class="grid2">
-<div id="tree" class="tree"></div>
-<div class="card">
-<h3>تفاصيل الحساب</h3>
-<div id="details">اختر حسابًا من الشجرة</div>
-</div>
-</div>
-</section>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <button class="nav-button active" data-page="dashboard">
+        لوحة التحكم
+      </button>
 
-<section id="journal" class="page">
-<h2>إنشاء قيد يومية</h2>
-<div class="card">
-<div class="toolbar">
-<input id="entryDate" type="date">
-<input id="entryMemo" placeholder="بيان القيد">
-</div>
-<table>
-<thead><tr><th>الحساب</th><th>مدين</th><th>دائن</th><th></th></tr></thead>
-<tbody id="lines"></tbody>
-</table>
-<div class="toolbar">
-<button onclick="addLine()">إضافة سطر</button>
-<button class="primary" onclick="postEntry()">ترحيل القيد</button>
-</div>
-<div id="status"></div>
-</div>
-</section>
+      <button class="nav-button" data-page="accounts">
+        شجرة الحسابات
+      </button>
 
-<section id="ledger" class="page">
-<h2>دفتر الأستاذ</h2>
-<div class="toolbar"><select id="ledgerAccount"></select></div>
-<table>
-<thead><tr><th>التاريخ</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead>
-<tbody id="ledgerRows"></tbody>
-</table>
-</section>
+      <button class="nav-button" data-page="journal-entry">
+        قيد يومية
+      </button>
 
-<section id="trial" class="page">
-<h2>ميزان المراجعة</h2>
-<table>
-<thead><tr><th>الكود</th><th>الحساب</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead>
-<tbody id="trialRows"></tbody>
-</table>
-</section>
-</main>
+      <button class="nav-button" data-page="journal-register">
+        سجل القيود
+      </button>
 
-<script>
-const initialAccounts=[
-{id:1,code:"1",name:"الأصول",parent:null,group:true,nature:"debit"},
-{id:2,code:"2",name:"الخصوم",parent:null,group:true,nature:"credit"},
-{id:3,code:"3",name:"حقوق الملكية",parent:null,group:true,nature:"credit"},
-{id:4,code:"4",name:"الإيرادات",parent:null,group:true,nature:"credit"},
-{id:5,code:"5",name:"المصاريف",parent:null,group:true,nature:"debit"},
-{id:11,code:"111",name:"الصندوق",parent:1,group:false,nature:"debit"},
-{id:12,code:"112",name:"البنك",parent:1,group:false,nature:"debit"},
-{id:21,code:"211",name:"الموردون",parent:2,group:false,nature:"credit"},
-{id:31,code:"311",name:"رأس المال",parent:3,group:false,nature:"credit"},
-{id:41,code:"411",name:"إيرادات المبيعات",parent:4,group:false,nature:"credit"},
-{id:51,code:"511",name:"مصروفات تشغيلية",parent:5,group:false,nature:"debit"}
-];
+      <button class="nav-button" data-page="ledger">
+        دفتر الأستاذ
+      </button>
 
-let accounts=JSON.parse(localStorage.getItem("jadrix_accounts")||"null")||initialAccounts;
-let entries=JSON.parse(localStorage.getItem("jadrix_entries")||"[]");
+      <button class="nav-button" data-page="trial-balance">
+        ميزان المراجعة
+      </button>
+    </aside>
 
-const money=n=>Number(n||0).toLocaleString("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2});
-const save=()=>{
- localStorage.setItem("jadrix_accounts",JSON.stringify(accounts));
- localStorage.setItem("jadrix_entries",JSON.stringify(entries));
-};
+    <main class="content">
+      <section id="dashboard" class="page active">
+        <div class="page-header">
+          <h1>لوحة التحكم المالية</h1>
+          <p>
+            ملخص مباشر للحسابات والقيود والحركات المالية.
+          </p>
+        </div>
 
-document.querySelectorAll(".tab").forEach(btn=>{
- btn.onclick=()=>{
-  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-  document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
-  btn.classList.add("active");
-  document.getElementById(btn.dataset.page).classList.add("active");
-  refresh();
- };
-});
+        <div class="cards">
+          <article class="card">
+            <div class="card-label">عدد الحسابات</div>
+            <div id="accountsCount" class="card-value">0</div>
+          </article>
 
-function renderTree(){
- const q=document.getElementById("search").value.trim();
- let html="";
- function walk(parent,level){
-  accounts.filter(a=>a.parent===parent).forEach(a=>{
-   if(!q||a.code.includes(q)||a.name.includes(q)){
-    html+=`<div class="node ${level===1?"root":""}" style="padding-right:${level*15}px" onclick="showAccount(${a.id})">${a.group?"📁":"📄"} ${a.code} - ${a.name}</div>`;
-   }
-   walk(a.id,level+1);
-  });
- }
- walk(null,1);
- tree.innerHTML=html||"لا توجد نتائج";
-}
+          <article class="card">
+            <div class="card-label">القيود المرحلة</div>
+            <div id="postedEntriesCount" class="card-value">0</div>
+          </article>
 
-search.oninput=renderTree;
+          <article class="card">
+            <div class="card-label">إجمالي الحركة المدينة</div>
+            <div id="totalDebit" class="card-value">0.00</div>
+          </article>
 
-function showAccount(id){
- const a=accounts.find(x=>x.id===id);
- const parent=accounts.find(x=>x.id===a.parent);
- details.innerHTML=`<b>${a.code} - ${a.name}</b><p>النوع: ${a.group?"تجميعي":"قابل للقيد"}</p><p>الطبيعة: ${a.nature==="debit"?"مدين":"دائن"}</p><p>الحساب الأب: ${parent?.name||"—"}</p>`;
-}
+          <article class="card">
+            <div class="card-label">إجمالي الحركة الدائنة</div>
+            <div id="totalCredit" class="card-value">0.00</div>
+          </article>
+        </div>
+      </section>
 
-function addAccount(){
- const code=prompt("أدخل كود الحساب");
- if(!code)return;
- if(accounts.some(a=>a.code===code)){alert("الكود مستخدم");return}
- const name=prompt("أدخل اسم الحساب");
- if(!name)return;
- const parentCode=prompt("أدخل كود الحساب الأب، أو اتركه فارغًا");
- const parent=accounts.find(a=>a.code===parentCode);
- const group=confirm("هل الحساب تجميعي؟");
- accounts.push({id:Date.now(),code,name,parent:parent?.id||null,group,nature:parent?.nature||"debit"});
- save();refresh();
-}
+      <section id="accounts" class="page">
+        <div class="page-header">
+          <h1>شجرة الحسابات</h1>
+          <p>
+            إدارة الحسابات الرئيسية والفرعية والحسابات القابلة للقيد.
+          </p>
+        </div>
 
-function postingAccounts(){return accounts.filter(a=>!a.group)}
+        <div class="toolbar">
+          <button id="newAccountButton" class="button primary">
+            حساب جديد
+          </button>
 
-function addLine(){
- const tr=document.createElement("tr");
- tr.innerHTML=`<td><select class="acc">${postingAccounts().map(a=>`<option value="${a.id}">${a.code} - ${a.name}</option>`).join("")}</select></td>
- <td><input class="debit" type="number" min="0" step="0.01"></td>
- <td><input class="credit" type="number" min="0" step="0.01"></td>
- <td><button onclick="this.closest('tr').remove()">×</button></td>`;
- lines.appendChild(tr);
-}
+          <button id="newChildAccountButton" class="button">
+            حساب فرعي
+          </button>
 
-function postEntry(){
- const rows=[...lines.querySelectorAll("tr")];
- const entryLines=rows.map(r=>({
-  accountId:Number(r.querySelector(".acc").value),
-  debit:Number(r.querySelector(".debit").value||0),
-  credit:Number(r.querySelector(".credit").value||0)
- })).filter(x=>x.debit||x.credit);
+          <button id="toggleAccountButton" class="button">
+            تعطيل / تفعيل
+          </button>
 
- const debit=entryLines.reduce((s,x)=>s+x.debit,0);
- const credit=entryLines.reduce((s,x)=>s+x.credit,0);
+          <input
+            id="accountSearch"
+            type="search"
+            placeholder="ابحث بكود الحساب أو اسمه"
+          >
+        </div>
 
- if(entryLines.length<2||Math.abs(debit-credit)>0.005){
-  status.innerHTML='<span class="bad">القيد غير متوازن أو أقل من سطرين.</span>';
-  return;
- }
+        <div class="split-layout">
+          <div id="accountTree" class="tree-container"></div>
 
- entries.push({
-  id:Date.now(),
-  date:entryDate.value,
-  memo:entryMemo.value,
-  lines:entryLines
- });
+          <aside class="panel account-details">
+            <h3>تفاصيل الحساب</h3>
 
- save();
- status.innerHTML='<span class="ok">تم ترحيل القيد بنجاح.</span>';
- lines.innerHTML="";
- addLine();addLine();refresh();
-}
+            <div id="accountDetails">
+              <p style="color: var(--muted);">
+                اختر حسابًا من الشجرة.
+              </p>
+            </div>
+          </aside>
+        </div>
+      </section>
 
-function balances(){
- const result={};
- postingAccounts().forEach(a=>result[a.id]={debit:0,credit:0});
- entries.forEach(e=>e.lines.forEach(l=>{
-  if(result[l.accountId]){
-   result[l.accountId].debit+=l.debit;
-   result[l.accountId].credit+=l.credit;
-  }
- }));
- return result;
-}
+      <section id="journal-entry" class="page">
+        <div class="page-header">
+          <h1>إنشاء قيد يومية</h1>
+          <p>
+            لا يمكن ترحيل القيد إلا عندما يتساوى المدين مع الدائن.
+          </p>
+        </div>
 
-function renderTrial(){
- const b=balances();
- trialRows.innerHTML=postingAccounts().map(a=>{
-  const x=b[a.id];
-  return `<tr><td>${a.code}</td><td>${a.name}</td><td>${money(x.debit)}</td><td>${money(x.credit)}</td><td>${money(x.debit-x.credit)}</td></tr>`;
- }).join("");
-}
+        <div class="panel">
+          <div class="form-grid">
+            <div class="field-3">
+              <label for="entryDate">التاريخ</label>
+              <input id="entryDate" type="date">
+            </div>
 
-function renderLedger(){
- ledgerAccount.innerHTML=postingAccounts().map(a=>`<option value="${a.id}">${a.code} - ${a.name}</option>`).join("");
- ledgerAccount.onchange=renderLedgerRows;
- renderLedgerRows();
-}
+            <div class="field-6">
+              <label for="entryMemo">بيان القيد</label>
+              <input
+                id="entryMemo"
+                type="text"
+                placeholder="اكتب وصفًا واضحًا للقيد"
+              >
+            </div>
 
-function renderLedgerRows(){
- const id=Number(ledgerAccount.value);
- let balance=0;
- let rows="";
- entries.forEach(e=>e.lines.filter(l=>l.accountId===id).forEach(l=>{
-  balance+=l.debit-l.credit;
-  rows+=`<tr><td>${e.date}</td><td>${e.memo||""}</td><td>${money(l.debit)}</td><td>${money(l.credit)}</td><td>${money(balance)}</td></tr>`;
- }));
- ledgerRows.innerHTML=rows||'<tr><td colspan="5">لا توجد حركة</td></tr>';
-}
+            <div class="field-3">
+              <label for="entryReference">المرجع الخارجي</label>
+              <input
+                id="entryReference"
+                type="text"
+                placeholder="اختياري"
+              >
+            </div>
+          </div>
 
-function refresh(){
- renderTree();renderTrial();renderLedger();
- const b=balances();
- countAccounts.textContent=accounts.length;
- countEntries.textContent=entries.length;
- totalDebit.textContent=money(Object.values(b).reduce((s,x)=>s+x.debit,0));
- totalCredit.textContent=money(Object.values(b).reduce((s,x)=>s+x.credit,0));
-}
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>الحساب</th>
+                  <th>بيان السطر</th>
+                  <th>مدين</th>
+                  <th>دائن</th>
+                  <th>حذف</th>
+                </tr>
+              </thead>
 
-entryDate.value=new Date().toISOString().slice(0,10);
-addLine();addLine();refresh();
-</script>
+              <tbody id="journalLines"></tbody>
+
+              <tfoot>
+                <tr>
+                  <th colspan="2">الإجمالي</th>
+                  <th id="journalDebitTotal">0.00</th>
+                  <th id="journalCreditTotal">0.00</th>
+                  <th></th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div class="toolbar" style="margin-top: 12px;">
+            <button id="addJournalLineButton" class="button">
+              إضافة سطر
+            </button>
+
+            <button id="postJournalEntryButton" class="button primary">
+              ترحيل القيد
+            </button>
+          </div>
+
+          <div id="journalMessage" class="message"></div>
+        </div>
+      </section>
+
+      <section id="journal-register" class="page">
+        <div class="page-header">
+          <h1>سجل القيود اليومية</h1>
+          <p>
+            عرض القيود المرحلة والملغاة والبحث فيها.
+          </p>
+        </div>
+
+        <div class="toolbar">
+          <input
+            id="journalSearch"
+            type="search"
+            placeholder="بحث برقم القيد أو البيان"
+          >
+
+          <select id="journalStatusFilter">
+            <option value="">كل الحالات</option>
+            <option value="POSTED">مرحل</option>
+            <option value="CANCELLED">ملغى</option>
+          </select>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>رقم القيد</th>
+                <th>التاريخ</th>
+                <th>البيان</th>
+                <th>الحالة</th>
+                <th>إجمالي المدين</th>
+                <th>إجمالي الدائن</th>
+                <th>الإجراء</th>
+              </tr>
+            </thead>
+
+            <tbody id="journalRegisterRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="ledger" class="page">
+        <div class="page-header">
+          <h1>دفتر الأستاذ</h1>
+          <p>
+            عرض حركة الحساب المحدد والرصيد المتراكم.
+          </p>
+        </div>
+
+        <div class="toolbar">
+          <select id="ledgerAccount"></select>
+
+          <input id="ledgerDateFrom" type="date">
+
+          <input id="ledgerDateTo" type="date">
+
+          <button id="refreshLedgerButton" class="button">
+            عرض
+          </button>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>التاريخ</th>
+                <th>رقم القيد</th>
+                <th>البيان</th>
+                <th>مدين</th>
+                <th>دائن</th>
+                <th>الرصيد</th>
+              </tr>
+            </thead>
+
+            <tbody id="ledgerRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="trial-balance" class="page">
+        <div class="page-header">
+          <h1>ميزان المراجعة</h1>
+          <p>
+            أرصدة الحسابات الناتجة عن القيود المرحلة فقط.
+          </p>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>كود الحساب</th>
+                <th>اسم الحساب</th>
+                <th>إجمالي المدين</th>
+                <th>إجمالي الدائن</th>
+                <th>رصيد مدين</th>
+                <th>رصيد دائن</th>
+              </tr>
+            </thead>
+
+            <tbody id="trialBalanceRows"></tbody>
+
+            <tfoot>
+              <tr>
+                <th colspan="2">الإجمالي</th>
+                <th id="trialDebitTotal">0.00</th>
+                <th id="trialCreditTotal">0.00</th>
+                <th id="trialDebitBalanceTotal">0.00</th>
+                <th id="trialCreditBalanceTotal">0.00</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="accountDialog">
+    <form id="accountForm">
+      <div class="dialog-header">
+        <h2 id="accountDialogTitle">إضافة حساب</h2>
+      </div>
+
+      <div class="dialog-body">
+        <div class="form-grid">
+          <div class="field-4">
+            <label for="accountCode">كود الحساب</label>
+            <input id="accountCode" required>
+          </div>
+
+          <div class="field-8 field-6">
+            <label for="accountName">اسم الحساب</label>
+            <input id="accountName" required>
+          </div>
+
+          <div class="field-6">
+            <label for="accountParent">الحساب الأب</label>
+            <select id="accountParent"></select>
+          </div>
+
+          <div class="field-6">
+            <label for="accountType">نوع الحساب</label>
+            <select id="accountType">
+              <option value="GROUP">تجميعي</option>
+              <option value="POSTING">قابل للقيد</option>
+            </select>
+          </div>
+
+          <div class="field-6">
+            <label for="accountNature">طبيعة الرصيد</label>
+            <select id="accountNature">
+              <option value="DEBIT">مدين</option>
+              <option value="CREDIT">دائن</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="accountFormMessage" class="message"></div>
+      </div>
+
+      <div class="dialog-footer">
+        <button type="submit" class="button primary">
+          حفظ
+        </button>
+
+        <button
+          id="closeAccountDialogButton"
+          type="button"
+          class="button"
+        >
+          إلغاء
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    "use strict";
+
+    const STORAGE_KEYS = {
+      accounts: "jadrix_accounts_v3",
+      entries: "jadrix_entries_v3",
+      entrySequence: "jadrix_entry_sequence_v3"
+    };
+
+    const initialAccounts = [
+      {
+        id: 1,
+        code: "1",
+        name: "الأصول",
+        parentId: null,
+        type: "GROUP",
+        nature: "DEBIT",
+        active: true,
+        root: true
+      },
+      {
+        id: 2,
+        code: "2",
+        name: "الخصوم",
+        parentId: null,
+        type: "GROUP",
+        nature: "CREDIT",
+        active: true,
+        root: true
+      },
+      {
+        id: 3,
+        code: "3",
+        name: "حقوق الملكية",
+        parentId: null,
+        type: "GROUP",
+        nature: "CREDIT",
+        active: true,
+        root: true
+      },
+      {
+        id: 4,
+        code: "4",
+        name: "الإيرادات",
+        parentId: null,
+        type: "GROUP",
+        nature: "CREDIT",
+        active: true,
+        root: true
+      },
+      {
+        id: 5,
+        code: "5",
+        name: "المصاريف",
+        parentId: null,
+        type: "GROUP",
+        nature: "DEBIT",
+        active: true,
+        root: true
+      },
+      {
+        id: 101,
+        code: "111",
+        name: "الصندوق",
+        parentId: 1,
+        type: "POSTING",
+        nature: "DEBIT",
+        active: true,
+        root: false
+      },
+      {
+        id: 102,
+        code: "112",
+        name: "البنوك",
+        parentId: 1,
+        type: "POSTING",
+        nature: "DEBIT",
+        active: true,
+        root: false
+      },
+      {
+        id: 103,
+        code: "113",
+        name: "العملاء",
+        parentId: 1,
+        type: "POSTING",
+        nature: "DEBIT",
+        active: true,
+        root: false
+      },
+      {
+        id: 201,
+        code: "211",
+        name: "الموردون",
+        parentId: 2,
+        type: "POSTING",
+        nature: "CREDIT",
+        active: true,
+        root: false
+      },
+      {
+        id: 301,
+        code: "311",
+        name: "رأس المال",
+        parentId: 3,
+        type: "POSTING",
+        nature: "CREDIT",
+        active: true,
+        root: false
+      },
+      {
+        id: 401,
+        code: "411",
+        name: "إيرادات المبيعات",
+        parentId: 4,
+        type: "POSTING",
+        nature: "CREDIT",
+        active: true,
+        root: false
+      },
+      {
+        id: 501,
+        code: "511",
+        name: "مصروفات تشغيلية",
+        parentId: 5,
+        type: "POSTING",
+        nature: "DEBIT",
+        active: true,
+        root: false
+      }
+    ];
+
+    let accounts = loadJson(
+      STORAGE_KEYS.accounts,
+      initialAccounts
+    );
+
+    let entries = loadJson(
+      STORAGE_KEYS.entries,
+      []
+    );
+
+    let selectedAccountId = null;
+    let accountDialogParentId = null;
+
+    const elements = {
+      pages: document.querySelectorAll(".page"),
+      navigationButtons:
+        document.querySelectorAll(".nav-button"),
+
+      accountsCount:
+        document.getElementById("accountsCount"),
+      postedEntriesCount:
+        document.getElementById("postedEntriesCount"),
+      totalDebit:
+        document.getElementById("totalDebit"),
+      totalCredit:
+        document.getElementById("totalCredit"),
+
+      accountSearch:
+        document.getElementById("accountSearch"),
+      accountTree:
+        document.getElementById("accountTree"),
+      accountDetails:
+        document.getElementById("accountDetails"),
+      newAccountButton:
+        document.getElementById("newAccountButton"),
+      newChildAccountButton:
+        document.getElementById("newChildAccountButton"),
+      toggleAccountButton:
+        document.getElementById("toggleAccountButton"),
+
+      accountDialog:
+        document.getElementById("accountDialog"),
+      accountForm:
+        document.getElementById("accountForm"),
+      accountCode:
+        document.getElementById("accountCode"),
+      accountName:
+        document.getElementById("accountName"),
+      accountParent:
+        document.getElementById("accountParent"),
+      accountType:
+        document.getElementById("accountType"),
+      accountNature:
+        document.getElementById("accountNature"),
+      accountFormMessage:
+        document.getElementById("accountFormMessage"),
+      closeAccountDialogButton:
+        document.getElementById(
+          "closeAccountDialogButton"
+        ),
+
+      entryDate:
+        document.getElementById("entryDate"),
+      entryMemo:
+        document.getElementById("entryMemo"),
+      entryReference:
+        document.getElementById("entryReference"),
+      journalLines:
+        document.getElementById("journalLines"),
+      journalDebitTotal:
+        document.getElementById("journalDebitTotal"),
+      journalCreditTotal:
+        document.getElementById("journalCreditTotal"),
+      addJournalLineButton:
+        document.getElementById("addJournalLineButton"),
+      postJournalEntryButton:
+        document.getElementById(
+          "postJournalEntryButton"
+        ),
+      journalMessage:
+        document.getElementById("journalMessage"),
+
+      journalSearch:
+        document.getElementById("journalSearch"),
+      journalStatusFilter:
+        document.getElementById("journalStatusFilter"),
+      journalRegisterRows:
+        document.getElementById("journalRegisterRows"),
+
+      ledgerAccount:
+        document.getElementById("ledgerAccount"),
+      ledgerDateFrom:
+        document.getElementById("ledgerDateFrom"),
+      ledgerDateTo:
+        document.getElementById("ledgerDateTo"),
+      refreshLedgerButton:
+        document.getElementById("refreshLedgerButton"),
+      ledgerRows:
+        document.getElementById("ledgerRows"),
+
+      trialBalanceRows:
+        document.getElementById("trialBalanceRows"),
+      trialDebitTotal:
+        document.getElementById("trialDebitTotal"),
+      trialCreditTotal:
+        document.getElementById("trialCreditTotal"),
+      trialDebitBalanceTotal:
+        document.getElementById("trialDebitBalanceTotal"),
+      trialCreditBalanceTotal:
+        document.getElementById(
+          "trialCreditBalanceTotal"
+        )
+    };
+
+    function loadJson(key, fallback) {
+      try {
+        const storedValue = localStorage.getItem(key);
+
+        if (!storedValue) {
+          return structuredClone(fallback);
+        }
+
+        return JSON.parse(storedValue);
+      } catch (error) {
+        console.error(error);
+        return structuredClone(fallback);
+      }
+    }
+
+    function persistData() {
+      localStorage.setItem(
+        STORAGE_KEYS.accounts,
+        JSON.stringify(accounts)
+      );
+
+      localStorage.setItem(
+        STORAGE_KEYS.entries,
+        JSON.stringify(entries)
+      );
+    }
+
+    function formatMoney(value) {
+      return Number(value || 0).toLocaleString(
+        "ar-SA",
+        {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }
+      );
+    }
+
+    function today() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function postingAccounts() {
+      return accounts
+        .filter(
+          (account) =>
+            account.type === "POSTING" &&
+            account.active
+        )
+        .sort((first, second) =>
+          first.code.localeCompare(
+            second.code,
+            undefined,
+            { numeric: true }
+          )
+        );
+    }
+
+    function postedEntries() {
+      return entries.filter(
+        (entry) => entry.status === "POSTED"
+      );
+    }
+
+    function findAccount(accountId) {
+      return accounts.find(
+        (account) => account.id === Number(accountId)
+      );
+    }
+
+    function showPage(pageId) {
+      elements.pages.forEach((page) => {
+        page.classList.toggle(
+          "active",
+          page.id === pageId
+        );
+      });
+
+      elements.navigationButtons.forEach((button) => {
+        button.classList.toggle(
+          "active",
+          button.dataset.page === pageId
+        );
+      });
+
+      refreshAll();
+    }
+
+    function renderDashboard() {
+      const balances = calculateBalances();
+
+      const totalDebit = Object.values(balances)
+        .reduce(
+          (sum, balance) => sum + balance.debit,
+          0
+        );
+
+      const totalCredit = Object.values(balances)
+        .reduce(
+          (sum, balance) => sum + balance.credit,
+          0
+        );
+
+      elements.accountsCount.textContent =
+        accounts.length;
+
+      elements.postedEntriesCount.textContent =
+        postedEntries().length;
+
+      elements.totalDebit.textContent =
+        formatMoney(totalDebit);
+
+      elements.totalCredit.textContent =
+        formatMoney(totalCredit);
+    }
+
+    function accountMatchesSearch(account, searchTerm) {
+      if (!searchTerm) {
+        return true;
+      }
+
+      return (
+        account.code
+          .toLowerCase()
+          .includes(searchTerm) ||
+        account.name
+          .toLowerCase()
+          .includes(searchTerm)
+      );
+    }
+
+    function hasMatchingDescendant(accountId, searchTerm) {
+      const children = accounts.filter(
+        (account) => account.parentId === accountId
+      );
+
+      return children.some(
+        (child) =>
+          accountMatchesSearch(child, searchTerm) ||
+          hasMatchingDescendant(child.id, searchTerm)
+      );
+    }
+
+    function renderAccountTree() {
+      const searchTerm =
+        elements.accountSearch.value
+          .trim()
+          .toLowerCase();
+
+      const rows = [];
+
+      function walk(parentId, level) {
+        const children = accounts
+          .filter(
+            (account) => account.parentId === parentId
+          )
+          .sort((first, second) =>
+            first.code.localeCompare(
+              second.code,
+              undefined,
+              { numeric: true }
+            )
+          );
+
+        children.forEach((account) => {
+          const visible =
+            accountMatchesSearch(
+              account,
+              searchTerm
+            ) ||
+            hasMatchingDescendant(
+              account.id,
+              searchTerm
+            );
+
+          if (visible) {
+            const selectedClass =
+              account.id === selectedAccountId
+                ? "selected"
+                : "";
+
+            const rootClass =
+              account.root
+                ? "root-account"
+                : "";
+
+            const statusText =
+              account.active
+                ? ""
+                : " — موقوف";
+
+            rows.push(`
+              <div
+                class="tree-node ${selectedClass} ${rootClass}"
+                style="padding-right: ${10 + level * 19}px;"
+                data-account-id="${account.id}"
+              >
+                <span>
+                  ${account.type === "GROUP" ? "📁" : "📄"}
+                </span>
+
+                <span>
+                  ${escapeHtml(account.code)}
+                  -
+                  ${escapeHtml(account.name)}
+                  ${statusText}
+                </span>
+              </div>
+            `);
+          }
+
+          walk(account.id, level + 1);
+        });
+      }
+
+      walk(null, 0);
+
+      elements.accountTree.innerHTML =
+        rows.join("") ||
+        `<div class="empty-row">لا توجد نتائج.</div>`;
+
+      elements.accountTree
+        .querySelectorAll(".tree-node")
+        .forEach((node) => {
+          node.addEventListener("click", () => {
+            selectedAccountId =
+              Number(node.dataset.accountId);
+
+            renderAccountTree();
+            renderSelectedAccount();
+          });
+        });
+    }
+
+    function renderSelectedAccount() {
+      const account =
+        findAccount(selectedAccountId);
+
+      if (!account) {
+        elements.accountDetails.innerHTML =
+          `<p style="color: var(--muted);">
+            اختر حسابًا من الشجرة.
+          </p>`;
+
+        return;
+      }
+
+      const parentAccount =
+        findAccount(account.parentId);
+
+      elements.accountDetails.innerHTML = `
+        <div class="detail-item">
+          <div class="detail-label">الحساب</div>
+          <div class="detail-value">
+            <strong>
+              ${escapeHtml(account.code)}
+              -
+              ${escapeHtml(account.name)}
+            </strong>
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-label">الحساب الأب</div>
+          <div class="detail-value">
+            ${
+              parentAccount
+                ? `${escapeHtml(parentAccount.code)}
+                   -
+                   ${escapeHtml(parentAccount.name)}`
+                : "—"
+            }
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-label">نوع الحساب</div>
+          <div class="detail-value">
+            ${
+              account.type === "GROUP"
+                ? "تجميعي"
+                : "قابل للقيد"
+            }
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-label">طبيعة الرصيد</div>
+          <div class="detail-value">
+            ${
+              account.nature === "DEBIT"
+                ? "مدين"
+                : "دائن"
+            }
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-label">الحالة</div>
+          <div class="detail-value">
+            ${account.active ? "نشط" : "موقوف"}
+          </div>
+        </div>
+      `;
+    }
+
+    function populateAccountParentOptions(
+      selectedParentId = null
+    ) {
+      const options = [
+        `<option value="">بدون حساب أب</option>`
+      ];
+
+      accounts
+        .filter(
+          (account) =>
+            account.type === "GROUP" &&
+            account.active
+        )
+        .sort((first, second) =>
+          first.code.localeCompare(
+            second.code,
+            undefined,
+            { numeric: true }
+          )
+        )
+        .forEach((account) => {
+          const selected =
+            account.id === selectedParentId
+              ? "selected"
+              : "";
+
+          options.push(`
+            <option value="${account.id}" ${selected}>
+              ${escapeHtml(account.code)}
+              -
+              ${escapeHtml(account.name)}
+            </option>
+          `);
+        });
+
+      elements.accountParent.innerHTML =
+        options.join("");
+    }
+
+    function openAccountDialog(parentId = null) {
+      accountDialogParentId = parentId;
+
+      elements.accountForm.reset();
+      elements.accountFormMessage.textContent = "";
+
+      populateAccountParentOptions(parentId);
+
+      const parentAccount = findAccount(parentId);
+
+      if (parentAccount) {
+        elements.accountNature.value =
+          parentAccount.nature;
+      }
+
+      elements.accountDialog.showModal();
+    }
+
+    function saveAccount(event) {
+      event.preventDefault();
+
+      const code =
+        elements.accountCode.value.trim();
+
+      const name =
+        elements.accountName.value.trim();
+
+      const parentId =
+        elements.accountParent.value
+          ? Number(elements.accountParent.value)
+          : null;
+
+      const type =
+        elements.accountType.value;
+
+      const nature =
+        elements.accountNature.value;
+
+      if (!code || !name) {
+        showAccountFormMessage(
+          "كود الحساب واسم الحساب مطلوبان.",
+          "error"
+        );
+
+        return;
+      }
+
+      if (
+        accounts.some(
+          (account) =>
+            account.code.toLowerCase() ===
+            code.toLowerCase()
+        )
+      ) {
+        showAccountFormMessage(
+          "كود الحساب مستخدم مسبقًا.",
+          "error"
+        );
+
+        return;
+      }
+
+      if (!parentId && accounts.length >= 5) {
+        showAccountFormMessage(
+          "لا يسمح بإضافة جذور جديدة. الحسابات الرئيسية خمسة فقط.",
+          "error"
+        );
+
+        return;
+      }
+
+      const parentAccount =
+        findAccount(parentId);
+
+      accounts.push({
+        id: Date.now(),
+        code,
+        name,
+        parentId,
+        type,
+        nature:
+          parentAccount
+            ? parentAccount.nature
+            : nature,
+        active: true,
+        root: false
+      });
+
+      persistData();
+
+      elements.accountDialog.close();
+
+      selectedAccountId = null;
+
+      refreshAll();
+    }
+
+    function showAccountFormMessage(
+      message,
+      type
+    ) {
+      elements.accountFormMessage.textContent =
+        message;
+
+      elements.accountFormMessage.className =
+        `message ${type}`;
+    }
+
+    function toggleSelectedAccount() {
+      const account =
+        findAccount(selectedAccountId);
+
+      if (!account) {
+        alert("اختر حسابًا أولًا.");
+        return;
+      }
+
+      if (account.root) {
+        alert(
+          "لا يمكن تعطيل الحسابات الرئيسية الخمسة."
+        );
+        return;
+      }
+
+      const usedInEntries =
+        entries.some((entry) =>
+          entry.lines.some(
+            (line) =>
+              line.accountId === account.id
+          )
+        );
+
+      if (usedInEntries && account.active) {
+        const confirmed = confirm(
+          "الحساب مستخدم في قيود. سيتم إيقاف استخدامه في القيود الجديدة فقط. هل تتابع؟"
+        );
+
+        if (!confirmed) {
+          return;
+        }
+      }
+
+      account.active = !account.active;
+
+      persistData();
+      refreshAll();
+    }
+
+    function accountSelectOptions(
+      selectedAccountId = null
+    ) {
+      return postingAccounts()
+        .map((account) => {
+          const selected =
+            account.id === selectedAccountId
+              ? "selected"
+              : "";
+
+          return `
+            <option value="${account.id}" ${selected}>
+              ${escapeHtml(account.code)}
+              -
+              ${escapeHtml(account.name)}
+            </option>
+          `;
+        })
+        .join("");
+    }
+
+    function addJournalLine(
+      initialLine = null
+    ) {
+      const row =
+        document.createElement("tr");
+
+      row.innerHTML = `
+        <td>
+          <select class="line-account">
+            ${accountSelectOptions(
+              initialLine?.accountId || null
+            )}
+          </select>
+        </td>
+
+        <td>
+          <input
+            class="line-memo"
+            type="text"
+            value="${escapeAttribute(
+              initialLine?.memo || ""
+            )}"
+            placeholder="بيان السطر"
+          >
+        </td>
+
+        <td>
+          <input
+            class="line-debit"
+            type="number"
+            min="0"
+            step="0.01"
+            value="${
+              initialLine?.debit || ""
+            }"
+          >
+        </td>
+
+        <td>
+          <input
+            class="line-credit"
+            type="number"
+            min="0"
+            step="0.01"
+            value="${
+              initialLine?.credit || ""
+            }"
+          >
+        </td>
+
+        <td>
+          <button
+            type="button"
+            class="button danger small delete-line-button"
+          >
+            حذف
+          </button>
+        </td>
+      `;
+
+      row
+        .querySelector(".delete-line-button")
+        .addEventListener("click", () => {
+          row.remove();
+          calculateJournalTotals();
+        });
+
+      row
+        .querySelectorAll(
+          ".line-debit, .line-credit"
+        )
+        .forEach((input) => {
+          input.addEventListener(
+            "input",
+            calculateJournalTotals
+          );
+        });
+
+      elements.journalLines.appendChild(row);
+
+      calculateJournalTotals();
+    }
+
+    function collectJournalLines() {
+      return Array.from(
+        elements.journalLines.querySelectorAll("tr")
+      )
+        .map((row) => {
+          const accountId =
+            Number(
+              row.querySelector(
+                ".line-account"
+              ).value
+            );
+
+          const memo =
+            row.querySelector(
+              ".line-memo"
+            ).value.trim();
+
+          const debit =
+            Number(
+              row.querySelector(
+                ".line-debit"
+              ).value || 0
+            );
+
+          const credit =
+            Number(
+              row.querySelector(
+                ".line-credit"
+              ).value || 0
+            );
+
+          return {
+            accountId,
+            memo,
+            debit,
+            credit
+          };
+        })
+        .filter(
+          (line) =>
+            line.debit > 0 ||
+            line.credit > 0
+        );
+    }
+
+    function calculateJournalTotals() {
+      const lines = collectJournalLines();
+
+      const debit = lines.reduce(
+        (sum, line) => sum + line.debit,
+        0
+      );
+
+      const credit = lines.reduce(
+        (sum, line) => sum + line.credit,
+        0
+      );
+
+      elements.journalDebitTotal.textContent =
+        formatMoney(debit);
+
+      elements.journalCreditTotal.textContent =
+        formatMoney(credit);
+
+      return {
+        debit,
+        credit
+      };
+    }
+
+    function nextJournalNumber() {
+      const currentSequence =
+        Number(
+          localStorage.getItem(
+            STORAGE_KEYS.entrySequence
+          ) || 0
+        ) + 1;
+
+      localStorage.setItem(
+        STORAGE_KEYS.entrySequence,
+        String(currentSequence)
+      );
+
+      return (
+        "JE-" +
+        String(currentSequence).padStart(6, "0")
+      );
+    }
+
+    function postJournalEntry() {
+      clearJournalMessage();
+
+      const date =
+        elements.entryDate.value;
+
+      const memo =
+        elements.entryMemo.value.trim();
+
+      const externalReference =
+        elements.entryReference.value.trim();
+
+      const lines = collectJournalLines();
+
+      const totals =
+        calculateJournalTotals();
+
+      if (!date) {
+        showJournalMessage(
+          "تاريخ القيد مطلوب.",
+          "error"
+        );
+        return;
+      }
+
+      if (!memo) {
+        showJournalMessage(
+          "بيان القيد مطلوب.",
+          "error"
+        );
+        return;
+      }
+
+      if (lines.length < 2) {
+        showJournalMessage(
+          "يجب أن يحتوي القيد على سطرين على الأقل.",
+          "error"
+        );
+        return;
+      }
+
+      const invalidLine =
+        lines.some(
+          (line) =>
+            (line.debit > 0 &&
+              line.credit > 0) ||
+            (line.debit <= 0 &&
+              line.credit <= 0)
+        );
+
+      if (invalidLine) {
+        showJournalMessage(
+          "كل سطر يجب أن يحتوي على مبلغ مدين أو دائن فقط.",
+          "error"
+        );
+        return;
+      }
+
+      if (
+        Math.abs(
+          totals.debit - totals.credit
+        ) > 0.005
+      ) {
+        showJournalMessage(
+          "القيد غير متوازن. إجمالي المدين يجب أن يساوي إجمالي الدائن.",
+          "error"
+        );
+        return;
+      }
+
+      entries.push({
+        id: Date.now(),
+        number: nextJournalNumber(),
+        date,
+        memo,
+        externalReference,
+        status: "POSTED",
+        createdAt: new Date().toISOString(),
+        cancelledAt: null,
+        lines
+      });
+
+      persistData();
+
+      elements.entryMemo.value = "";
+      elements.entryReference.value = "";
+      elements.journalLines.innerHTML = "";
+
+      addJournalLine();
+      addJournalLine();
+
+      showJournalMessage(
+        "تم ترحيل القيد بنجاح.",
+        "success"
+      );
+
+      refreshAll();
+    }
+
+    function showJournalMessage(
+      message,
+      type
+    ) {
+      elements.journalMessage.textContent =
+        message;
+
+      elements.journalMessage.className =
+        `message ${type}`;
+    }
+
+    function clearJournalMessage() {
+      elements.journalMessage.textContent = "";
+      elements.journalMessage.className =
+        "message";
+    }
+
+    function entryTotals(entry) {
+      return entry.lines.reduce(
+        (totals, line) => {
+          totals.debit +=
+            Number(line.debit || 0);
+
+          totals.credit +=
+            Number(line.credit || 0);
+
+          return totals;
+        },
+        {
+          debit: 0,
+          credit: 0
+        }
+      );
+    }
+
+    function renderJournalRegister() {
+      const searchTerm =
+        elements.journalSearch.value
+          .trim()
+          .toLowerCase();
+
+      const statusFilter =
+        elements.journalStatusFilter.value;
+
+      const rows = entries
+        .filter((entry) => {
+          if (
+            statusFilter &&
+            entry.status !== statusFilter
+          ) {
+            return false;
+          }
+
+          if (!searchTerm) {
+            return true;
+          }
+
+          return (
+            String(entry.number || "")
+              .toLowerCase()
+              .includes(searchTerm) ||
+            String(entry.memo || "")
+              .toLowerCase()
+              .includes(searchTerm)
+          );
+        })
+        .sort(
+          (first, second) =>
+            new Date(second.createdAt) -
+            new Date(first.createdAt)
+        )
+        .map((entry) => {
+          const totals =
+            entryTotals(entry);
+
+          const statusLabel =
+            entry.status === "CANCELLED"
+              ? "ملغى"
+              : "مرحل";
+
+          const statusClass =
+            entry.status === "CANCELLED"
+              ? "status-cancelled"
+              : "status-posted";
+
+          const action =
+            entry.status === "CANCELLED"
+              ? "—"
+              : `
+                <button
+                  type="button"
+                  class="button danger small cancel-entry-button"
+                  data-entry-id="${entry.id}"
+                >
+                  إلغاء
+                </button>
+              `;
+
+          return `
+            <tr>
+              <td>${escapeHtml(entry.number)}</td>
+              <td>${escapeHtml(entry.date)}</td>
+              <td>${escapeHtml(entry.memo)}</td>
+              <td class="${statusClass}">
+                ${statusLabel}
+              </td>
+              <td>${formatMoney(totals.debit)}</td>
+              <td>${formatMoney(totals.credit)}</td>
+              <td>${action}</td>
+            </tr>
+          `;
+        });
+
+      elements.journalRegisterRows.innerHTML =
+        rows.join("") ||
+        `
+          <tr>
+            <td colspan="7" class="empty-row">
+              لا توجد قيود.
+            </td>
+          </tr>
+        `;
+
+      elements.journalRegisterRows
+        .querySelectorAll(
+          ".cancel-entry-button"
+        )
+        .forEach((button) => {
+          button.addEventListener("click", () => {
+            cancelJournalEntry(
+              Number(button.dataset.entryId)
+            );
+          });
+        });
+    }
+
+    function cancelJournalEntry(entryId) {
+      const entry =
+        entries.find(
+          (item) => item.id === entryId
+        );
+
+      if (
+        !entry ||
+        entry.status === "CANCELLED"
+      ) {
+        return;
+      }
+
+      const confirmed = confirm(
+        `هل تريد إلغاء القيد ${entry.number}؟`
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      entry.status = "CANCELLED";
+      entry.cancelledAt =
+        new Date().toISOString();
+
+      persistData();
+      refreshAll();
+    }
+
+    function calculateBalances() {
+      const balances = {};
+
+      postingAccounts().forEach((account) => {
+        balances[account.id] = {
+          debit: 0,
+          credit: 0
+        };
+      });
+
+      postedEntries().forEach((entry) => {
+        entry.lines.forEach((line) => {
+          if (!balances[line.accountId]) {
+            balances[line.accountId] = {
+              debit: 0,
+              credit: 0
+            };
+          }
+
+          balances[line.accountId].debit +=
+            Number(line.debit || 0);
+
+          balances[line.accountId].credit +=
+            Number(line.credit || 0);
+        });
+      });
+
+      return balances;
+    }
+
+    function renderLedgerAccountOptions() {
+      const currentValue =
+        Number(elements.ledgerAccount.value);
+
+      elements.ledgerAccount.innerHTML =
+        accountSelectOptions(currentValue);
+    }
+
+    function renderLedger() {
+      const accountId =
+        Number(elements.ledgerAccount.value);
+
+      if (!accountId) {
+        elements.ledgerRows.innerHTML =
+          `
+            <tr>
+              <td colspan="6" class="empty-row">
+                اختر حسابًا.
+              </td>
+            </tr>
+          `;
+
+        return;
+      }
+
+      const dateFrom =
+        elements.ledgerDateFrom.value;
+
+      const dateTo =
+        elements.ledgerDateTo.value;
+
+      let balance = 0;
+      const rows = [];
+
+      postedEntries()
+        .filter((entry) => {
+          if (
+            dateFrom &&
+            entry.date < dateFrom
+          ) {
+            return false;
+          }
+
+          if (
+            dateTo &&
+            entry.date > dateTo
+          ) {
+            return false;
+          }
+
+          return true;
+        })
+        .sort((first, second) =>
+          first.date.localeCompare(second.date)
+        )
+        .forEach((entry) => {
+          entry.lines
+            .filter(
+              (line) =>
+                line.accountId === accountId
+            )
+            .forEach((line) => {
+              balance +=
+                Number(line.debit || 0) -
+                Number(line.credit || 0);
+
+              rows.push(`
+                <tr>
+                  <td>${escapeHtml(entry.date)}</td>
+                  <td>${escapeHtml(entry.number)}</td>
+                  <td>
+                    ${escapeHtml(
+                      line.memo || entry.memo
+                    )}
+                  </td>
+                  <td>${formatMoney(line.debit)}</td>
+                  <td>${formatMoney(line.credit)}</td>
+                  <td>${formatMoney(balance)}</td>
+                </tr>
+              `);
+            });
+        });
+
+      elements.ledgerRows.innerHTML =
+        rows.join("") ||
+        `
+          <tr>
+            <td colspan="6" class="empty-row">
+              لا توجد حركة على الحساب.
+            </td>
+          </tr>
+        `;
+    }
+
+    function renderTrialBalance() {
+      const balances =
+        calculateBalances();
+
+      let totalDebit = 0;
+      let totalCredit = 0;
+      let totalDebitBalance = 0;
+      let totalCreditBalance = 0;
+
+      const rows = postingAccounts()
+        .map((account) => {
+          const movement =
+            balances[account.id] || {
+              debit: 0,
+              credit: 0
+            };
+
+          const net =
+            movement.debit -
+            movement.credit;
+
+          const debitBalance =
+            net > 0 ? net : 0;
+
+          const creditBalance =
+            net < 0 ? Math.abs(net) : 0;
+
+          totalDebit += movement.debit;
+          totalCredit += movement.credit;
+          totalDebitBalance += debitBalance;
+          totalCreditBalance += creditBalance;
+
+          return `
+            <tr>
+              <td>${escapeHtml(account.code)}</td>
+              <td>${escapeHtml(account.name)}</td>
+              <td>${formatMoney(movement.debit)}</td>
+              <td>${formatMoney(movement.credit)}</td>
+              <td>${formatMoney(debitBalance)}</td>
+              <td>${formatMoney(creditBalance)}</td>
+            </tr>
+          `;
+        });
+
+      elements.trialBalanceRows.innerHTML =
+        rows.join("");
+
+      elements.trialDebitTotal.textContent =
+        formatMoney(totalDebit);
+
+      elements.trialCreditTotal.textContent =
+        formatMoney(totalCredit);
+
+      elements.trialDebitBalanceTotal.textContent =
+        formatMoney(totalDebitBalance);
+
+      elements.trialCreditBalanceTotal.textContent =
+        formatMoney(totalCreditBalance);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function escapeAttribute(value) {
+      return escapeHtml(value);
+    }
+
+    function refreshAll() {
+      renderDashboard();
+      renderAccountTree();
+      renderSelectedAccount();
+      renderJournalRegister();
+      renderLedgerAccountOptions();
+      renderLedger();
+      renderTrialBalance();
+    }
+
+    elements.navigationButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        showPage(button.dataset.page);
+      });
+    });
+
+    elements.accountSearch.addEventListener(
+      "input",
+      renderAccountTree
+    );
+
+    elements.newAccountButton.addEventListener(
+      "click",
+      () => openAccountDialog(null)
+    );
+
+    elements.newChildAccountButton.addEventListener(
+      "click",
+      () => {
+        if (!selectedAccountId) {
+          alert("اختر حسابًا أب أولًا.");
+          return;
+        }
+
+        const selectedAccount =
+          findAccount(selectedAccountId);
+
+        if (
+          selectedAccount.type !== "GROUP"
+        ) {
+          alert(
+            "لا يمكن إضافة حساب فرعي تحت حساب قابل للقيد."
+          );
+          return;
+        }
+
+        openAccountDialog(selectedAccountId);
+      }
+    );
+
+    elements.toggleAccountButton.addEventListener(
+      "click",
+      toggleSelectedAccount
+    );
+
+    elements.accountForm.addEventListener(
+      "submit",
+      saveAccount
+    );
+
+    elements.closeAccountDialogButton.addEventListener(
+      "click",
+      () => elements.accountDialog.close()
+    );
+
+    elements.addJournalLineButton.addEventListener(
+      "click",
+      () => addJournalLine()
+    );
+
+    elements.postJournalEntryButton.addEventListener(
+      "click",
+      postJournalEntry
+    );
+
+    elements.journalSearch.addEventListener(
+      "input",
+      renderJournalRegister
+    );
+
+    elements.journalStatusFilter.addEventListener(
+      "change",
+      renderJournalRegister
+    );
+
+    elements.refreshLedgerButton.addEventListener(
+      "click",
+      renderLedger
+    );
+
+    elements.ledgerAccount.addEventListener(
+      "change",
+      renderLedger
+    );
+
+    elements.entryDate.value = today();
+
+    addJournalLine();
+    addJournalLine();
+
+    refreshAll();
+  </script>
 </body>
 </html>
