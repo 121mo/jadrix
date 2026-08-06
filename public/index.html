@@ -611,18 +611,176 @@ function projectOptions() {
       .join("");
 }
 
+function normalizeArabic(text) {
+  return String(text || "")
+    .toLowerCase()
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/ى/g, "ي")
+    .replace(/ؤ/g, "و")
+    .replace(/ئ/g, "ي")
+    .replace(/[ًٌٍَُِّْـ]/g, "")
+    .trim();
+}
+
+function createLookupField({
+  items,
+  display,
+  search,
+  placeholder,
+  hiddenClass,
+  inputClass
+}) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "smart-lookup";
+
+  wrapper.innerHTML = `
+    <input
+      type="text"
+      class="smart-lookup-input ${inputClass}"
+      placeholder="${placeholder}"
+      autocomplete="off"
+    >
+    <input type="hidden" class="${hiddenClass}">
+    <div class="smart-lookup-results"></div>
+  `;
+
+  const input = wrapper.querySelector(".smart-lookup-input");
+  const hidden = wrapper.querySelector("." + hiddenClass);
+  const results = wrapper.querySelector(".smart-lookup-results");
+
+  let filtered = [];
+  let activeIndex = -1;
+
+  function close() {
+    results.classList.remove("open");
+  }
+
+  function selectItem(item) {
+    input.value = display(item);
+    hidden.value = item.id;
+    close();
+  }
+
+  function render(query = "") {
+    const q = normalizeArabic(query);
+
+    filtered = items
+      .filter(item => !q || normalizeArabic(search(item)).includes(q))
+      .slice(0, 12);
+
+    if (!filtered.length) {
+      results.innerHTML =
+        '<div class="smart-lookup-empty">لا توجد نتائج</div>';
+      results.classList.add("open");
+      return;
+    }
+
+    results.innerHTML = filtered.map((item, index) => `
+      <div class="smart-lookup-item" data-index="${index}">
+        <div class="smart-lookup-title">${display(item)}</div>
+      </div>
+    `).join("");
+
+    results.classList.add("open");
+
+    results.querySelectorAll(".smart-lookup-item").forEach(element => {
+      element.onclick = () => {
+        selectItem(filtered[Number(element.dataset.index)]);
+      };
+    });
+  }
+
+  input.addEventListener("input", () => {
+    hidden.value = "";
+    render(input.value);
+  });
+
+  input.addEventListener("focus", () => render(input.value));
+
+  input.addEventListener("keydown", event => {
+    const options = results.querySelectorAll(".smart-lookup-item");
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      activeIndex = Math.min(activeIndex + 1, options.length - 1);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      activeIndex = Math.max(activeIndex - 1, 0);
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+
+      if (filtered[activeIndex]) {
+        selectItem(filtered[activeIndex]);
+      }
+
+      return;
+    } else if (event.key === "Escape") {
+      close();
+      return;
+    } else {
+      return;
+    }
+
+    options.forEach(option => option.classList.remove("active"));
+
+    if (options[activeIndex]) {
+      options[activeIndex].classList.add("active");
+      options[activeIndex].scrollIntoView({ block: "nearest" });
+    }
+  });
+
+  document.addEventListener("click", event => {
+    if (!wrapper.contains(event.target)) close();
+  });
+
+  return wrapper;
+}
+
 function addJournalLine() {
   const row = document.createElement("tr");
 
   row.innerHTML = `
-    <td><select class="line-account">${accountOptions()}</select></td>
+    <td class="account-cell"></td>
     <td><input class="line-memo"></td>
-    <td><select class="line-cost">${costCenterOptions()}</select></td>
-    <td><select class="line-project">${projectOptions()}</select></td>
-    <td><input class="line-debit" type="number" step="0.01"></td>
-    <td><input class="line-credit" type="number" step="0.01"></td>
+    <td class="cost-cell"></td>
+    <td class="project-cell"></td>
+    <td><input class="line-debit" type="text" inputmode="decimal"></td>
+    <td><input class="line-credit" type="text" inputmode="decimal"></td>
     <td><button onclick="this.closest('tr').remove()">×</button></td>
   `;
+
+  const accountLookup = createLookupField({
+    items: postingAccounts(),
+    display: item => `${item.code} - ${item.name}`,
+    search: item =>
+      `${item.code} ${item.name} ${item.nature} ${item.type}`,
+    placeholder: "ابحث بالحساب أو الكود",
+    hiddenClass: "line-account",
+    inputClass: "line-account-search"
+  });
+
+  const costLookup = createLookupField({
+    items: bootstrapData.costCenters || [],
+    display: item => `${item.code || ""} - ${item.name}`,
+    search: item => `${item.code || ""} ${item.name}`,
+    placeholder: "ابحث بمركز التكلفة",
+    hiddenClass: "line-cost",
+    inputClass: "line-cost-search"
+  });
+
+  const projectLookup = createLookupField({
+    items: bootstrapData.projects || [],
+    display: item => `${item.code || ""} - ${item.name}`,
+    search: item => `${item.code || ""} ${item.name}`,
+    placeholder: "ابحث بالمشروع",
+    hiddenClass: "line-project",
+    inputClass: "line-project-search"
+  });
+
+  row.querySelector(".account-cell").appendChild(accountLookup);
+  row.querySelector(".cost-cell").appendChild(costLookup);
+  row.querySelector(".project-cell").appendChild(projectLookup);
 
   journalLines.appendChild(row);
 }
@@ -634,8 +792,14 @@ async function postEntry() {
       memo: row.querySelector(".line-memo").value,
       costCenterId: row.querySelector(".line-cost").value || null,
       projectId: row.querySelector(".line-project").value || null,
-      debit: Number(row.querySelector(".line-debit").value || 0),
-      credit: Number(row.querySelector(".line-credit").value || 0)
+      debit: Number(
+        String(row.querySelector(".line-debit").value || "0")
+          .replace(/,/g, "")
+      ),
+      credit: Number(
+        String(row.querySelector(".line-credit").value || "0")
+          .replace(/,/g, "")
+      )
     }))
     .filter(line => line.debit || line.credit);
 
@@ -926,6 +1090,85 @@ select.line-account::-ms-expand,
 select.line-project::-ms-expand,
 select.line-cost::-ms-expand {
   display: none !important;
+}
+</style>
+
+
+<style id="jadrix-smart-lookup-style">
+.smart-lookup {
+  position: relative;
+  width: 100%;
+}
+
+.smart-lookup-input {
+  width: 100%;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid #263852;
+  background: #081424;
+  color: #ffffff;
+  padding: 0 12px;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: none !important;
+}
+
+.smart-lookup-input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56,189,248,.12);
+}
+
+.smart-lookup-input::placeholder {
+  color: #8aa0b8;
+}
+
+.smart-lookup-results {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  left: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  display: none;
+  z-index: 9999;
+  background: #101826;
+  border: 1px solid #263852;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.4);
+}
+
+.smart-lookup-results.open {
+  display: block;
+}
+
+.smart-lookup-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.smart-lookup-item:hover,
+.smart-lookup-item.active {
+  background: #1a2a40;
+}
+
+.smart-lookup-title {
+  font-weight: 700;
+  color: #eef5ff;
+}
+
+.smart-lookup-subtitle {
+  margin-top: 3px;
+  font-size: 12px;
+  color: #9cadc3;
+}
+
+.smart-lookup-empty {
+  padding: 12px;
+  text-align: center;
+  color: #9cadc3;
 }
 </style>
 
