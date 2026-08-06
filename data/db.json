@@ -2,10 +2,34 @@
   "users": [
     {
       "id": 1,
-      "name": "مدير النظام",
+      "name": "مالك النظام",
       "email": "admin@jadrix.local",
       "password": "admin123",
       "role": "OWNER",
+      "active": true
+    },
+    {
+      "id": 2,
+      "name": "المحاسب",
+      "email": "accountant@jadrix.local",
+      "password": "accountant123",
+      "role": "ACCOUNTANT",
+      "active": true
+    },
+    {
+      "id": 3,
+      "name": "رئيس الحسابات",
+      "email": "chief@jadrix.local",
+      "password": "chief123",
+      "role": "CHIEF_ACCOUNTANT",
+      "active": true
+    },
+    {
+      "id": 4,
+      "name": "المدير المالي",
+      "email": "finance@jadrix.local",
+      "password": "finance123",
+      "role": "FINANCE_MANAGER",
       "active": true
     }
   ],
