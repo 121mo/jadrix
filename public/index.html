@@ -50,6 +50,17 @@ th,td{padding:9px;border-bottom:1px solid var(--line);text-align:right}
 .msg{margin-top:8px;color:#fca5a5}
 .ok{color:#86efac}
 .muted{color:var(--muted);font-size:13px}
+.badge{display:inline-block;padding:4px 9px;border-radius:999px;background:#26374e;font-size:12px;margin-top:5px}
+.status{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:bold}
+.status-DRAFT{background:#475569}
+.status-SUBMITTED{background:#1d4ed8}
+.status-REVIEWED{background:#7c3aed}
+.status-APPROVED{background:#0f766e}
+.status-POSTED{background:#15803d}
+.status-REJECTED{background:#b45309}
+.status-CANCELLED{background:#991b1b}
+.actions{display:flex;gap:5px;flex-wrap:wrap}
+.actions button{padding:6px 8px;font-size:12px}
 @media(max-width:800px){
   .layout{display:block}
   .sidebar{display:flex;overflow:auto;border-left:0;border-bottom:1px solid var(--line)}
@@ -76,6 +87,7 @@ th,td{padding:9px;border-bottom:1px solid var(--line);text-align:right}
   <div>
     <strong>Jadrix ERP</strong>
     <div id="contextLabel" class="muted"></div>
+    <div id="currentRole" class="badge"></div>
   </div>
   <button id="logoutButton">خروج</button>
 </header>
@@ -142,7 +154,7 @@ th,td{padding:9px;border-bottom:1px solid var(--line);text-align:right}
 
     <div class="toolbar">
       <button id="addLineButton">إضافة سطر</button>
-      <button id="postEntryButton" class="primary">ترحيل القيد</button>
+      <button id="postEntryButton" class="primary">حفظ القيد كمسودة</button>
     </div>
     <div id="journalMessage" class="msg"></div>
   </div>
@@ -294,6 +306,16 @@ async function startApp() {
     contextLabel.textContent =
       `${company.nameAr} — ${branch.nameAr} — ${year.name}`;
 
+    const roleNames = {
+      OWNER: "مالك النظام",
+      ACCOUNTANT: "المحاسب",
+      CHIEF_ACCOUNTANT: "رئيس الحسابات",
+      FINANCE_MANAGER: "المدير المالي"
+    };
+
+    currentRole.textContent =
+      `${bootstrapData.user.name} — ${roleNames[bootstrapData.user.role] || bootstrapData.user.role}`;
+
     await refreshAll();
   } catch {
     token = "";
@@ -316,6 +338,111 @@ async function refreshAll() {
   renderLedger();
   renderTrial();
   renderAudit();
+}
+
+function hasPermission(permission) {
+  return (
+    bootstrapData &&
+    Array.isArray(bootstrapData.permissions) &&
+    bootstrapData.permissions.includes(permission)
+  );
+}
+
+const statusNames = {
+  DRAFT: "مسودة",
+  SUBMITTED: "مرسل للمراجعة",
+  REVIEWED: "تمت المراجعة",
+  APPROVED: "معتمد",
+  POSTED: "مرحّل",
+  REJECTED: "مرفوض",
+  CANCELLED: "ملغى"
+};
+
+function workflowButtons(entry) {
+  const buttons = [];
+
+  if (
+    hasPermission("SUBMIT") &&
+    ["DRAFT", "REJECTED"].includes(entry.status)
+  ) {
+    buttons.push(
+      `<button onclick="workflowAction(${entry.id}, 'submit')">إرسال</button>`
+    );
+  }
+
+  if (
+    hasPermission("REVIEW") &&
+    entry.status === "SUBMITTED"
+  ) {
+    buttons.push(
+      `<button onclick="workflowAction(${entry.id}, 'review')">مراجعة</button>`
+    );
+  }
+
+  if (
+    hasPermission("APPROVE") &&
+    entry.status === "REVIEWED"
+  ) {
+    buttons.push(
+      `<button onclick="workflowAction(${entry.id}, 'approve')">اعتماد</button>`
+    );
+  }
+
+  if (
+    hasPermission("POST") &&
+    entry.status === "APPROVED"
+  ) {
+    buttons.push(
+      `<button class="primary" onclick="workflowAction(${entry.id}, 'post')">ترحيل</button>`
+    );
+  }
+
+  if (
+    hasPermission("REJECT") &&
+    ["SUBMITTED", "REVIEWED", "APPROVED"].includes(entry.status)
+  ) {
+    buttons.push(
+      `<button class="danger" onclick="workflowAction(${entry.id}, 'reject')">رفض</button>`
+    );
+  }
+
+  if (
+    hasPermission("CANCEL") &&
+    !["CANCELLED"].includes(entry.status)
+  ) {
+    buttons.push(
+      `<button class="danger" onclick="workflowAction(${entry.id}, 'cancel')">إلغاء</button>`
+    );
+  }
+
+  return buttons.length
+    ? `<div class="actions">${buttons.join("")}</div>`
+    : "—";
+}
+
+async function workflowAction(entryId, action) {
+  let note = "";
+
+  if (action === "reject") {
+    note = prompt("اكتب سبب الرفض") || "";
+    if (!note) return;
+  }
+
+  if (action === "cancel") {
+    if (!confirm("هل تريد إلغاء القيد؟")) return;
+    note = prompt("ملاحظة الإلغاء") || "";
+  }
+
+  try {
+    await api(`/api/journal-entries/${entryId}/${action}`, {
+      method: "POST",
+      body: JSON.stringify({ note })
+    });
+
+    await refreshAll();
+  } catch (error) {
+    alert(error.message);
+  }
 }
 
 function postingAccounts() {
@@ -526,7 +653,7 @@ async function postEntry() {
       })
     });
 
-    journalMessage.textContent = "تم ترحيل القيد بنجاح";
+    journalMessage.textContent = "تم حفظ القيد كمسودة بنجاح";
     journalMessage.className = "msg ok";
 
     journalLines.innerHTML = "";
@@ -552,18 +679,14 @@ function renderRegister() {
           <td>${entry.number}</td>
           <td>${entry.date}</td>
           <td>${entry.memo}</td>
-          <td>${entry.status}</td>
+          <td>
+            <span class="status status-${entry.status}">
+              ${statusNames[entry.status] || entry.status}
+            </span>
+          </td>
           <td>${money(result.debit)}</td>
           <td>${money(result.credit)}</td>
-          <td>
-            ${
-              entry.status === "POSTED"
-                ? `<button class="danger" onclick="cancelEntry(${entry.id})">
-                    إلغاء
-                   </button>`
-                : "—"
-            }
-          </td>
+          <td>${workflowButtons(entry)}</td>
         </tr>
       `;
     })
