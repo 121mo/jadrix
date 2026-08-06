@@ -822,3 +822,46 @@ if (token) {
 </script>
 </body>
 </html>
+
+<style>
+/* إزالة أسهم الزيادة والنقصان من حقول المبالغ */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+  text-align: left;
+  direction: ltr;
+  font-variant-numeric: tabular-nums;
+}
+</style>
+
+<script>
+document.addEventListener("wheel", function (event) {
+  if (
+    document.activeElement &&
+    document.activeElement.matches('input[type="number"]')
+  ) {
+    document.activeElement.blur();
+  }
+}, { passive: true });
+
+document.addEventListener("focusout", function (event) {
+  const field = event.target;
+
+  if (
+    field.matches(".line-debit, .line-credit") &&
+    field.value !== ""
+  ) {
+    const amount = Number(field.value);
+
+    if (Number.isFinite(amount)) {
+      field.value = amount.toFixed(2);
+    }
+  }
+});
+</script>
