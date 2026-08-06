@@ -1474,3 +1474,562 @@ document.addEventListener("focusin", function (event) {
 });
 </script>
 
+
+<style id="jadrix-editable-journal-grid">
+/* جدول قيد هادئ مثل المستندات المحاسبية */
+#journalLines td {
+  position: relative;
+  min-height: 42px;
+  padding: 4px 6px;
+  overflow: visible !important;
+}
+
+.journal-grid-cell {
+  position: relative;
+  width: 100%;
+  min-width: 130px;
+}
+
+.journal-cell-display {
+  width: 100%;
+  min-height: 36px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #eef5ff;
+  cursor: text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.journal-cell-display:hover {
+  background: rgba(255,255,255,.035);
+  border-color: #263852;
+}
+
+.journal-cell-display.empty {
+  color: #71839a;
+}
+
+.journal-cell-editor {
+  display: none;
+  width: 100%;
+  height: 36px;
+  padding: 7px 9px;
+  border: 1px solid #38bdf8 !important;
+  border-radius: 6px;
+  outline: none;
+  background: #081424 !important;
+  color: #eef5ff !important;
+  box-shadow: 0 0 0 2px rgba(56,189,248,.12);
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: none !important;
+}
+
+.journal-grid-cell.editing .journal-cell-display {
+  display: none;
+}
+
+.journal-grid-cell.editing .journal-cell-editor {
+  display: block;
+}
+
+/* البيان والمبالغ داخل الجدول دون مظهر النموذج الثقيل */
+.journal-inline-input {
+  width: 100%;
+  height: 36px;
+  padding: 7px 9px;
+  border: 1px solid transparent !important;
+  border-radius: 6px;
+  background: transparent !important;
+  color: #eef5ff !important;
+  outline: none;
+}
+
+.journal-inline-input:hover {
+  border-color: #263852 !important;
+  background: rgba(255,255,255,.025) !important;
+}
+
+.journal-inline-input:focus {
+  border-color: #38bdf8 !important;
+  background: #081424 !important;
+}
+
+.line-debit,
+.line-credit {
+  direction: ltr;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+/* نافذة البحث مستقلة عن الجدول */
+#jadrixGridLookupOverlay {
+  position: fixed;
+  display: none;
+  z-index: 1000000;
+  width: 430px;
+  max-height: 280px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #101826;
+  border: 1px solid #344861;
+  border-radius: 9px;
+  box-shadow: 0 18px 45px rgba(0,0,0,.58);
+  padding: 5px;
+  scrollbar-width: none;
+}
+
+#jadrixGridLookupOverlay::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+#jadrixGridLookupOverlay.open {
+  display: block;
+}
+
+.grid-lookup-result {
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,.045);
+}
+
+.grid-lookup-result:last-child {
+  border-bottom: 0;
+}
+
+.grid-lookup-result:hover,
+.grid-lookup-result.active {
+  background: #1b2a3f;
+}
+
+.grid-result-main {
+  color: #eef5ff;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.grid-result-meta {
+  margin-top: 2px;
+  color: #8fa4bc;
+  font-size: 11px;
+}
+
+.grid-lookup-empty {
+  padding: 18px;
+  text-align: center;
+  color: #8fa4bc;
+}
+
+/* زر حذف السطر */
+.journal-row-remove {
+  width: 38px;
+  min-width: 38px;
+  padding: 7px;
+}
+</style>
+
+<script id="jadrix-editable-journal-grid-script">
+(() => {
+  let overlay = document.getElementById("jadrixGridLookupOverlay");
+
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "jadrixGridLookupOverlay";
+    document.body.appendChild(overlay);
+  }
+
+  let activeLookup = null;
+  let currentResults = [];
+  let activeResultIndex = -1;
+
+  function normalizeSearch(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/[أإآ]/g, "ا")
+      .replace(/ة/g, "ه")
+      .replace(/ى/g, "ي")
+      .replace(/ؤ/g, "و")
+      .replace(/ئ/g, "ي")
+      .replace(/[ًٌٍَُِّْـ]/g, "")
+      .trim();
+  }
+
+  function closeGridLookup() {
+    overlay.classList.remove("open");
+    overlay.innerHTML = "";
+    currentResults = [];
+    activeResultIndex = -1;
+  }
+
+  function positionGridLookup(input) {
+    const rect = input.getBoundingClientRect();
+    const width = Math.max(rect.width, 400);
+    const estimatedHeight = Math.min(overlay.scrollHeight || 280, 280);
+    const spaceBelow = window.innerHeight - rect.bottom;
+
+    overlay.style.width = `${width}px`;
+    overlay.style.left =
+      `${Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8))}px`;
+
+    overlay.style.top =
+      spaceBelow >= estimatedHeight + 12
+        ? `${rect.bottom + 5}px`
+        : `${Math.max(8, rect.top - estimatedHeight - 5)}px`;
+  }
+
+  function paintActiveResult() {
+    const nodes = overlay.querySelectorAll(".grid-lookup-result");
+
+    nodes.forEach(node => node.classList.remove("active"));
+
+    if (nodes[activeResultIndex]) {
+      nodes[activeResultIndex].classList.add("active");
+      nodes[activeResultIndex].scrollIntoView({ block: "nearest" });
+    }
+  }
+
+  function selectGridResult(item) {
+    if (!activeLookup || !item) return;
+
+    activeLookup.hidden.value = String(item.id);
+    activeLookup.input.value = activeLookup.display(item);
+    activeLookup.displayNode.textContent = activeLookup.display(item);
+    activeLookup.displayNode.classList.remove("empty");
+    activeLookup.wrapper.classList.remove("editing");
+
+    closeGridLookup();
+    activeLookup = null;
+  }
+
+  function renderGridResults(query) {
+    if (!activeLookup) return;
+
+    const normalized = normalizeSearch(query);
+
+    if (!normalized) {
+      closeGridLookup();
+      return;
+    }
+
+    currentResults = activeLookup.getItems()
+      .map(item => {
+        const code = normalizeSearch(item.code);
+        const name = normalizeSearch(
+          item.name || item.nameAr || item.nameEn
+        );
+        const text = normalizeSearch(activeLookup.search(item));
+
+        let score = 0;
+
+        if (code === normalized) score += 1000;
+        else if (code.startsWith(normalized)) score += 800;
+        else if (code.includes(normalized)) score += 550;
+
+        if (name === normalized) score += 900;
+        else if (name.startsWith(normalized)) score += 700;
+        else if (name.includes(normalized)) score += 450;
+
+        if (text.includes(normalized)) score += 200;
+
+        return { item, score };
+      })
+      .filter(result => result.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 12)
+      .map(result => result.item);
+
+    if (!currentResults.length) {
+      overlay.innerHTML =
+        '<div class="grid-lookup-empty">لا توجد نتائج مطابقة</div>';
+    } else {
+      overlay.innerHTML = currentResults.map((item, index) => `
+        <div class="grid-lookup-result" data-index="${index}">
+          <div class="grid-result-main">
+            ${activeLookup.display(item)}
+          </div>
+          <div class="grid-result-meta">
+            ${activeLookup.meta(item)}
+          </div>
+        </div>
+      `).join("");
+
+      overlay.querySelectorAll(".grid-lookup-result").forEach(node => {
+        node.addEventListener("mousedown", event => {
+          event.preventDefault();
+          selectGridResult(
+            currentResults[Number(node.dataset.index)]
+          );
+        });
+      });
+    }
+
+    activeResultIndex = -1;
+    overlay.classList.add("open");
+    requestAnimationFrame(() => positionGridLookup(activeLookup.input));
+  }
+
+  function createEditableLookupCell({
+    hiddenClass,
+    inputClass,
+    placeholder,
+    getItems,
+    display,
+    search,
+    meta
+  }) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "journal-grid-cell";
+
+    wrapper.innerHTML = `
+      <div class="journal-cell-display empty">${placeholder}</div>
+      <input
+        type="text"
+        class="journal-cell-editor ${inputClass}"
+        autocomplete="off"
+      >
+      <input type="hidden" class="${hiddenClass}">
+    `;
+
+    const displayNode = wrapper.querySelector(".journal-cell-display");
+    const input = wrapper.querySelector(".journal-cell-editor");
+    const hidden = wrapper.querySelector("." + hiddenClass);
+
+    function activate() {
+      if (activeLookup && activeLookup.wrapper !== wrapper) {
+        activeLookup.wrapper.classList.remove("editing");
+      }
+
+      activeLookup = {
+        wrapper,
+        input,
+        hidden,
+        displayNode,
+        getItems,
+        display,
+        search,
+        meta
+      };
+
+      wrapper.classList.add("editing");
+      input.focus();
+      input.select();
+
+      if (input.value.trim()) {
+        renderGridResults(input.value);
+      } else {
+        closeGridLookup();
+      }
+    }
+
+    displayNode.addEventListener("click", activate);
+
+    input.addEventListener("input", () => {
+      hidden.value = "";
+      renderGridResults(input.value);
+    });
+
+    input.addEventListener("keydown", event => {
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        activeResultIndex = Math.min(
+          activeResultIndex + 1,
+          currentResults.length - 1
+        );
+        paintActiveResult();
+      }
+
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        activeResultIndex = Math.max(activeResultIndex - 1, 0);
+        paintActiveResult();
+      }
+
+      if (event.key === "Enter") {
+        event.preventDefault();
+
+        if (currentResults[activeResultIndex]) {
+          selectGridResult(currentResults[activeResultIndex]);
+        } else if (currentResults.length === 1) {
+          selectGridResult(currentResults[0]);
+        }
+      }
+
+      if (event.key === "Escape") {
+        wrapper.classList.remove("editing");
+        closeGridLookup();
+      }
+    });
+
+    input.addEventListener("blur", () => {
+      window.setTimeout(() => {
+        if (activeLookup?.wrapper === wrapper) {
+          wrapper.classList.remove("editing");
+
+          if (!hidden.value) {
+            input.value = "";
+            displayNode.textContent = placeholder;
+            displayNode.classList.add("empty");
+          }
+
+          closeGridLookup();
+          activeLookup = null;
+        }
+      }, 120);
+    });
+
+    return wrapper;
+  }
+
+  addJournalLine = function () {
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td class="account-cell"></td>
+      <td>
+        <input class="line-memo journal-inline-input" placeholder="">
+      </td>
+      <td class="cost-cell"></td>
+      <td class="project-cell"></td>
+      <td>
+        <input
+          class="line-debit journal-inline-input"
+          type="text"
+          inputmode="decimal"
+        >
+      </td>
+      <td>
+        <input
+          class="line-credit journal-inline-input"
+          type="text"
+          inputmode="decimal"
+        >
+      </td>
+      <td>
+        <button
+          type="button"
+          class="journal-row-remove"
+          title="حذف السطر"
+        >×</button>
+      </td>
+    `;
+
+    const accountCell = createEditableLookupCell({
+      hiddenClass: "line-account",
+      inputClass: "line-account-search",
+      placeholder: "اختيار الحساب",
+      getItems: () =>
+        Array.isArray(accounts)
+          ? accounts.filter(
+              account =>
+                account.type === "POSTING" &&
+                account.active !== false
+            )
+          : [],
+      display: item => `${item.code} - ${item.name}`,
+      search: item =>
+        `${item.code} ${item.name} ${item.nameAr || ""}
+         ${item.nameEn || ""} ${item.nature || ""} ${item.type || ""}`,
+      meta: item =>
+        `${item.nature === "CREDIT" ? "دائن" : "مدين"} • حساب ترحيل`
+    });
+
+    const costCell = createEditableLookupCell({
+      hiddenClass: "line-cost",
+      inputClass: "line-cost-search",
+      placeholder: "مركز التكلفة",
+      getItems: () => bootstrapData?.costCenters || [],
+      display: item =>
+        `${item.code ? item.code + " - " : ""}${item.name}`,
+      search: item =>
+        `${item.code || ""} ${item.name || ""}`,
+      meta: () => "مركز تكلفة"
+    });
+
+    const projectCell = createEditableLookupCell({
+      hiddenClass: "line-project",
+      inputClass: "line-project-search",
+      placeholder: "المشروع",
+      getItems: () => bootstrapData?.projects || [],
+      display: item =>
+        `${item.code ? item.code + " - " : ""}${item.name}`,
+      search: item =>
+        `${item.code || ""} ${item.name || ""}`,
+      meta: () => "مشروع"
+    });
+
+    row.querySelector(".account-cell").appendChild(accountCell);
+    row.querySelector(".cost-cell").appendChild(costCell);
+    row.querySelector(".project-cell").appendChild(projectCell);
+
+    const debit = row.querySelector(".line-debit");
+    const credit = row.querySelector(".line-credit");
+
+    debit.addEventListener("input", () => {
+      if (Number(debit.value.replace(/,/g, "")) > 0) {
+        credit.value = "";
+      }
+    });
+
+    credit.addEventListener("input", () => {
+      if (Number(credit.value.replace(/,/g, "")) > 0) {
+        debit.value = "";
+      }
+    });
+
+    row.querySelector(".journal-row-remove").onclick = () => {
+      row.remove();
+    };
+
+    journalLines.appendChild(row);
+  };
+
+  function rebuildJournalGrid() {
+    if (!window.journalLines) return;
+
+    journalLines.innerHTML = "";
+    addJournalLine();
+    addJournalLine();
+
+    if (window.addLineButton) {
+      addLineButton.onclick = () => addJournalLine();
+    }
+  }
+
+  document.addEventListener("click", event => {
+    if (
+      activeLookup &&
+      !activeLookup.wrapper.contains(event.target) &&
+      !overlay.contains(event.target)
+    ) {
+      activeLookup.wrapper.classList.remove("editing");
+      closeGridLookup();
+      activeLookup = null;
+    }
+  });
+
+  window.addEventListener("scroll", () => {
+    if (activeLookup && overlay.classList.contains("open")) {
+      positionGridLookup(activeLookup.input);
+    }
+  }, true);
+
+  window.addEventListener("resize", () => {
+    if (activeLookup && overlay.classList.contains("open")) {
+      positionGridLookup(activeLookup.input);
+    }
+  });
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", rebuildJournalGrid);
+  } else {
+    rebuildJournalGrid();
+  }
+})();
+</script>
+
