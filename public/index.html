@@ -865,3 +865,38 @@ document.addEventListener("focusout", function (event) {
   }
 });
 </script>
+
+<style>
+/* تنسيق قوائم الحساب والمشروع ومركز التكلفة */
+.line-account,
+.line-cost,
+.line-project {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background-image:
+    linear-gradient(45deg, transparent 50%, #9cadc3 50%),
+    linear-gradient(135deg, #9cadc3 50%, transparent 50%);
+
+  background-position:
+    14px 50%,
+    9px 50%;
+
+  background-size:
+    5px 5px,
+    5px 5px;
+
+  background-repeat: no-repeat;
+
+  padding-left: 30px;
+  cursor: pointer;
+}
+
+/* منع ظهور أسهم المتصفح الأصلية */
+.line-account::-ms-expand,
+.line-cost::-ms-expand,
+.line-project::-ms-expand {
+  display: none;
+}
+</style>
