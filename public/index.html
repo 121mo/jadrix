@@ -1,159 +1,701 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Jadrix ERP</title>
-  <style>
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Tahoma,Arial;background:#07111f;color:#eef5ff}
-    .hidden{display:none!important}
-    .login{min-height:100vh;display:grid;place-items:center;padding:20px}
-    .card{width:min(420px,95vw);background:#111e32;border:1px solid #263852;border-radius:18px;padding:25px}
-    input,button{width:100%;padding:12px;margin:7px 0;border-radius:9px;border:1px solid #263852;font:inherit}
-    input{background:#081424;color:white}
-    button{background:#1fbf75;color:#03291a;font-weight:bold;cursor:pointer}
-    header{display:flex;justify-content:space-between;align-items:center;padding:15px 22px;background:#081323;border-bottom:1px solid #263852}
-    main{padding:22px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
-    .panel{background:#111e32;border:1px solid #263852;border-radius:14px;padding:18px}
-    .value{font-size:28px;color:#38bdf8;font-weight:bold;margin-top:8px}
-    .error{color:#fca5a5}
-    .muted{color:#9cadc3;font-size:13px}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Jadrix ERP</title>
+<style>
+:root{
+  --bg:#07111f;
+  --panel:#111e32;
+  --panel2:#17263d;
+  --line:#263852;
+  --text:#eef5ff;
+  --muted:#9cadc3;
+  --primary:#1fbf75;
+  --secondary:#38bdf8;
+  --danger:#b83a3a;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select{font:inherit}
+.hidden{display:none!important}
+.login{min-height:100vh;display:grid;place-items:center;padding:20px}
+.login-card,.panel,.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.login-card{width:min(94vw,430px)}
+input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:#081424;color:white}
+button{border:1px solid var(--line);border-radius:8px;padding:10px 13px;background:#26374e;color:white;cursor:pointer}
+.primary{background:var(--primary);color:#03291a;font-weight:bold}
+.danger{background:var(--danger)}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:#081323;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.layout{display:grid;grid-template-columns:230px 1fr;min-height:calc(100vh - 62px)}
+.sidebar{padding:12px;background:#0b1628;border-left:1px solid var(--line)}
+.nav{width:100%;margin:4px 0;text-align:right;background:transparent}
+.nav.active,.nav:hover{background:var(--panel2)}
+main{padding:18px}
+.page{display:none}
+.page.active{display:block}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.value{font-size:26px;color:var(--secondary);font-weight:bold;margin-top:7px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.toolbar input,.toolbar select{max-width:290px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;min-width:780px}
+th,td{padding:9px;border-bottom:1px solid var(--line);text-align:right}
+.grid2{display:grid;grid-template-columns:1fr 320px;gap:12px}
+.tree{max-height:62vh;overflow:auto}
+.node{padding:8px;border-radius:7px}
+.node:hover{background:var(--panel2)}
+.root{color:#facc15;font-weight:bold}
+.msg{margin-top:8px;color:#fca5a5}
+.ok{color:#86efac}
+.muted{color:var(--muted);font-size:13px}
+@media(max-width:800px){
+  .layout{display:block}
+  .sidebar{display:flex;overflow:auto;border-left:0;border-bottom:1px solid var(--line)}
+  .nav{min-width:145px}
+  .grid2{grid-template-columns:1fr}
+}
+</style>
 </head>
 <body>
 
 <section id="loginView" class="login">
-  <div class="card">
+  <div class="login-card">
     <h1>Jadrix ERP</h1>
     <p class="muted">تسجيل الدخول إلى النظام المالي</p>
-
-    <input id="email" value="admin@jadrix.local" placeholder="البريد الإلكتروني">
-    <input id="password" value="admin123" type="password" placeholder="كلمة المرور">
-
-    <button id="loginButton">دخول</button>
-    <div id="loginMessage" class="error"></div>
+    <input id="loginEmail" value="admin@jadrix.local" placeholder="البريد الإلكتروني">
+    <input id="loginPassword" value="admin123" type="password" placeholder="كلمة المرور">
+    <button id="loginButton" class="primary" style="width:100%">دخول</button>
+    <div id="loginMessage" class="msg"></div>
   </div>
 </section>
 
 <section id="appView" class="hidden">
-  <header>
-    <div>
-      <strong>Jadrix ERP</strong>
-      <div id="context" class="muted"></div>
+<header class="topbar">
+  <div>
+    <strong>Jadrix ERP</strong>
+    <div id="contextLabel" class="muted"></div>
+  </div>
+  <button id="logoutButton">خروج</button>
+</header>
+
+<div class="layout">
+<aside class="sidebar">
+  <button class="nav active" data-page="dashboard">لوحة التحكم</button>
+  <button class="nav" data-page="accounts">شجرة الحسابات</button>
+  <button class="nav" data-page="journal">القيود اليومية</button>
+  <button class="nav" data-page="register">سجل القيود</button>
+  <button class="nav" data-page="ledger">دفتر الأستاذ</button>
+  <button class="nav" data-page="trial">ميزان المراجعة</button>
+  <button class="nav" data-page="audit">سجل التدقيق</button>
+</aside>
+
+<main>
+<section id="dashboard" class="page active">
+  <h2>لوحة التحكم المالية</h2>
+  <div class="cards">
+    <div class="card"><div>عدد الحسابات</div><div id="kpiAccounts" class="value">0</div></div>
+    <div class="card"><div>القيود المرحلة</div><div id="kpiEntries" class="value">0</div></div>
+    <div class="card"><div>إجمالي المدين</div><div id="kpiDebit" class="value">0.00</div></div>
+    <div class="card"><div>إجمالي الدائن</div><div id="kpiCredit" class="value">0.00</div></div>
+  </div>
+</section>
+
+<section id="accounts" class="page">
+  <h2>شجرة الحسابات</h2>
+  <div class="toolbar">
+    <input id="accountSearch" placeholder="بحث بالكود أو الاسم">
+    <button id="addAccountButton" class="primary">إضافة حساب</button>
+  </div>
+  <div class="grid2">
+    <div id="accountTree" class="panel tree"></div>
+    <div id="accountDetails" class="panel">اختر حسابًا لعرض تفاصيله</div>
+  </div>
+</section>
+
+<section id="journal" class="page">
+  <h2>إنشاء قيد يومية</h2>
+  <div class="panel">
+    <div class="toolbar">
+      <input id="entryDate" type="date">
+      <input id="entryMemo" placeholder="بيان القيد">
+      <input id="entryReference" placeholder="المرجع الخارجي">
     </div>
-    <button id="logoutButton" style="width:auto;background:#26374e;color:white">خروج</button>
-  </header>
 
-  <main>
-    <h2>لوحة التحكم المالية</h2>
-
-    <div class="grid">
-      <div class="panel">
-        <div>عدد الحسابات</div>
-        <div id="accountsCount" class="value">0</div>
-      </div>
-
-      <div class="panel">
-        <div>عدد القيود</div>
-        <div id="entriesCount" class="value">0</div>
-      </div>
-
-      <div class="panel">
-        <div>المستخدم الحالي</div>
-        <div id="currentUser" class="value" style="font-size:20px">—</div>
-      </div>
-
-      <div class="panel">
-        <div>حالة الخادم</div>
-        <div class="value" style="color:#86efac">متصل</div>
-      </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>الحساب</th>
+            <th>البيان</th>
+            <th>مركز التكلفة</th>
+            <th>المشروع</th>
+            <th>مدين</th>
+            <th>دائن</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="journalLines"></tbody>
+      </table>
     </div>
-  </main>
+
+    <div class="toolbar">
+      <button id="addLineButton">إضافة سطر</button>
+      <button id="postEntryButton" class="primary">ترحيل القيد</button>
+    </div>
+    <div id="journalMessage" class="msg"></div>
+  </div>
+</section>
+
+<section id="register" class="page">
+  <h2>سجل القيود</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>الرقم</th>
+          <th>التاريخ</th>
+          <th>البيان</th>
+          <th>الحالة</th>
+          <th>مدين</th>
+          <th>دائن</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="registerRows"></tbody>
+    </table>
+  </div>
+</section>
+
+<section id="ledger" class="page">
+  <h2>دفتر الأستاذ</h2>
+  <div class="toolbar">
+    <select id="ledgerAccount"></select>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>التاريخ</th>
+          <th>القيد</th>
+          <th>البيان</th>
+          <th>مدين</th>
+          <th>دائن</th>
+          <th>الرصيد</th>
+        </tr>
+      </thead>
+      <tbody id="ledgerRows"></tbody>
+    </table>
+  </div>
+</section>
+
+<section id="trial" class="page">
+  <h2>ميزان المراجعة</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>الكود</th>
+          <th>الحساب</th>
+          <th>إجمالي مدين</th>
+          <th>إجمالي دائن</th>
+          <th>رصيد مدين</th>
+          <th>رصيد دائن</th>
+        </tr>
+      </thead>
+      <tbody id="trialRows"></tbody>
+    </table>
+  </div>
+</section>
+
+<section id="audit" class="page">
+  <h2>سجل التدقيق</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>الوقت</th>
+          <th>الإجراء</th>
+          <th>الكيان</th>
+          <th>المعرف</th>
+        </tr>
+      </thead>
+      <tbody id="auditRows"></tbody>
+    </table>
+  </div>
+</section>
+</main>
+</div>
 </section>
 
 <script>
-  let token = localStorage.getItem("jadrix_token") || "";
+let token = localStorage.getItem("jadrix_token") || "";
+let bootstrapData = null;
+let accounts = [];
+let entries = [];
+let auditLog = [];
 
-  async function api(url, options = {}) {
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      }
+const money = value =>
+  Number(value || 0).toLocaleString("ar-SA", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
+async function api(url, options = {}) {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    }
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "حدث خطأ");
+  }
+
+  return data;
+}
+
+async function login() {
+  loginMessage.textContent = "";
+
+  try {
+    const result = await api("/api/login", {
+      method: "POST",
+      body: JSON.stringify({
+        email: loginEmail.value,
+        password: loginPassword.value
+      })
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "حدث خطأ");
-    }
-
-    return data;
+    token = result.token;
+    localStorage.setItem("jadrix_token", token);
+    await startApp();
+  } catch (error) {
+    loginMessage.textContent = error.message;
   }
+}
 
-  async function login() {
-    loginMessage.textContent = "";
+async function startApp() {
+  try {
+    bootstrapData = await api("/api/bootstrap");
 
-    try {
-      const result = await api("/api/login", {
-        method: "POST",
-        body: JSON.stringify({
-          email: email.value,
-          password: password.value
-        })
-      });
+    loginView.classList.add("hidden");
+    appView.classList.remove("hidden");
 
-      token = result.token;
-      localStorage.setItem("jadrix_token", token);
-      await openApp();
-    } catch (error) {
-      loginMessage.textContent = error.message;
-    }
-  }
+    const company = bootstrapData.companies[0];
+    const branch = bootstrapData.branches[0];
+    const year = bootstrapData.fiscalYears[0];
 
-  async function openApp() {
-    try {
-      const [bootstrap, accounts, entries] = await Promise.all([
-        api("/api/bootstrap"),
-        api("/api/accounts"),
-        api("/api/journal-entries")
-      ]);
+    contextLabel.textContent =
+      `${company.nameAr} — ${branch.nameAr} — ${year.name}`;
 
-      loginView.classList.add("hidden");
-      appView.classList.remove("hidden");
-
-      const company = bootstrap.companies[0];
-      const branch = bootstrap.branches[0];
-      const fiscalYear = bootstrap.fiscalYears[0];
-
-      context.textContent =
-        `${company.nameAr} — ${branch.nameAr} — ${fiscalYear.name}`;
-
-      currentUser.textContent = bootstrap.user.name;
-      accountsCount.textContent = accounts.length;
-      entriesCount.textContent = entries.length;
-    } catch {
-      localStorage.removeItem("jadrix_token");
-      token = "";
-      loginView.classList.remove("hidden");
-      appView.classList.add("hidden");
-    }
-  }
-
-  loginButton.onclick = login;
-
-  logoutButton.onclick = () => {
+    await refreshAll();
+  } catch {
+    token = "";
     localStorage.removeItem("jadrix_token");
-    location.reload();
-  };
-
-  if (token) {
-    openApp();
+    loginView.classList.remove("hidden");
+    appView.classList.add("hidden");
   }
-</script>
+}
 
+async function refreshAll() {
+  [accounts, entries, auditLog] = await Promise.all([
+    api("/api/accounts"),
+    api("/api/journal-entries"),
+    api("/api/audit-log")
+  ]);
+
+  renderDashboard();
+  renderAccounts();
+  renderRegister();
+  renderLedger();
+  renderTrial();
+  renderAudit();
+}
+
+function postingAccounts() {
+  return accounts.filter(account =>
+    account.type === "POSTING" && account.active
+  );
+}
+
+function postedEntries() {
+  return entries.filter(entry => entry.status === "POSTED");
+}
+
+function totals(entry) {
+  return entry.lines.reduce(
+    (result, line) => ({
+      debit: result.debit + Number(line.debit || 0),
+      credit: result.credit + Number(line.credit || 0)
+    }),
+    { debit: 0, credit: 0 }
+  );
+}
+
+function calculateBalances() {
+  const balances = {};
+
+  postingAccounts().forEach(account => {
+    balances[account.id] = { debit: 0, credit: 0 };
+  });
+
+  postedEntries().forEach(entry => {
+    entry.lines.forEach(line => {
+      if (!balances[line.accountId]) {
+        balances[line.accountId] = { debit: 0, credit: 0 };
+      }
+
+      balances[line.accountId].debit += Number(line.debit || 0);
+      balances[line.accountId].credit += Number(line.credit || 0);
+    });
+  });
+
+  return balances;
+}
+
+function renderDashboard() {
+  const balances = calculateBalances();
+
+  const totalDebit = Object.values(balances)
+    .reduce((sum, item) => sum + item.debit, 0);
+
+  const totalCredit = Object.values(balances)
+    .reduce((sum, item) => sum + item.credit, 0);
+
+  kpiAccounts.textContent = accounts.length;
+  kpiEntries.textContent = postedEntries().length;
+  kpiDebit.textContent = money(totalDebit);
+  kpiCredit.textContent = money(totalCredit);
+}
+
+function renderAccounts() {
+  const query = accountSearch.value.trim();
+  const rows = [];
+
+  function walk(parentId, level) {
+    accounts
+      .filter(account => account.parentId === parentId)
+      .sort((a, b) =>
+        a.code.localeCompare(b.code, undefined, { numeric: true })
+      )
+      .forEach(account => {
+        if (
+          !query ||
+          account.code.includes(query) ||
+          account.name.includes(query)
+        ) {
+          rows.push(`
+            <div
+              class="node ${account.root ? "root" : ""}"
+              style="padding-right:${10 + level * 18}px"
+              onclick="showAccount(${account.id})"
+            >
+              ${account.type === "GROUP" ? "📁" : "📄"}
+              ${account.code} - ${account.name}
+            </div>
+          `);
+        }
+
+        walk(account.id, level + 1);
+      });
+  }
+
+  walk(null, 0);
+  accountTree.innerHTML = rows.join("") || "لا توجد نتائج";
+}
+
+function showAccount(id) {
+  const account = accounts.find(item => item.id === id);
+  const parent = accounts.find(item => item.id === account.parentId);
+
+  accountDetails.innerHTML = `
+    <h3>${account.code} - ${account.name}</h3>
+    <p>النوع: ${account.type}</p>
+    <p>الطبيعة: ${account.nature}</p>
+    <p>الحساب الأب: ${parent ? parent.name : "—"}</p>
+    <p>الحالة: ${account.active ? "نشط" : "موقوف"}</p>
+  `;
+}
+
+async function addAccount() {
+  const code = prompt("أدخل كود الحساب");
+  if (!code) return;
+
+  const name = prompt("أدخل اسم الحساب");
+  if (!name) return;
+
+  const parentCode = prompt("أدخل كود الحساب الأب");
+  const parent = accounts.find(account => account.code === parentCode);
+
+  try {
+    await api("/api/accounts", {
+      method: "POST",
+      body: JSON.stringify({
+        companyId: 1,
+        code,
+        name,
+        parentId: parent ? parent.id : null,
+        type: "POSTING",
+        nature: parent ? parent.nature : "DEBIT"
+      })
+    });
+
+    await refreshAll();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+function accountOptions() {
+  return postingAccounts()
+    .map(account =>
+      `<option value="${account.id}">
+        ${account.code} - ${account.name}
+      </option>`
+    )
+    .join("");
+}
+
+function costCenterOptions() {
+  return `<option value="">—</option>` +
+    bootstrapData.costCenters
+      .map(item =>
+        `<option value="${item.id}">
+          ${item.code} - ${item.name}
+        </option>`
+      )
+      .join("");
+}
+
+function projectOptions() {
+  return `<option value="">—</option>` +
+    bootstrapData.projects
+      .map(item =>
+        `<option value="${item.id}">
+          ${item.code} - ${item.name}
+        </option>`
+      )
+      .join("");
+}
+
+function addJournalLine() {
+  const row = document.createElement("tr");
+
+  row.innerHTML = `
+    <td><select class="line-account">${accountOptions()}</select></td>
+    <td><input class="line-memo"></td>
+    <td><select class="line-cost">${costCenterOptions()}</select></td>
+    <td><select class="line-project">${projectOptions()}</select></td>
+    <td><input class="line-debit" type="number" step="0.01"></td>
+    <td><input class="line-credit" type="number" step="0.01"></td>
+    <td><button onclick="this.closest('tr').remove()">×</button></td>
+  `;
+
+  journalLines.appendChild(row);
+}
+
+async function postEntry() {
+  const lines = [...journalLines.querySelectorAll("tr")]
+    .map(row => ({
+      accountId: Number(row.querySelector(".line-account").value),
+      memo: row.querySelector(".line-memo").value,
+      costCenterId: row.querySelector(".line-cost").value || null,
+      projectId: row.querySelector(".line-project").value || null,
+      debit: Number(row.querySelector(".line-debit").value || 0),
+      credit: Number(row.querySelector(".line-credit").value || 0)
+    }))
+    .filter(line => line.debit || line.credit);
+
+  try {
+    await api("/api/journal-entries", {
+      method: "POST",
+      body: JSON.stringify({
+        date: entryDate.value,
+        memo: entryMemo.value,
+        externalReference: entryReference.value,
+        companyId: 1,
+        branchId: 1,
+        fiscalYearId: 1,
+        lines
+      })
+    });
+
+    journalMessage.textContent = "تم ترحيل القيد بنجاح";
+    journalMessage.className = "msg ok";
+
+    journalLines.innerHTML = "";
+    addJournalLine();
+    addJournalLine();
+
+    await refreshAll();
+  } catch (error) {
+    journalMessage.textContent = error.message;
+    journalMessage.className = "msg";
+  }
+}
+
+function renderRegister() {
+  registerRows.innerHTML = entries
+    .slice()
+    .reverse()
+    .map(entry => {
+      const result = totals(entry);
+
+      return `
+        <tr>
+          <td>${entry.number}</td>
+          <td>${entry.date}</td>
+          <td>${entry.memo}</td>
+          <td>${entry.status}</td>
+          <td>${money(result.debit)}</td>
+          <td>${money(result.credit)}</td>
+          <td>
+            ${
+              entry.status === "POSTED"
+                ? `<button class="danger" onclick="cancelEntry(${entry.id})">
+                    إلغاء
+                   </button>`
+                : "—"
+            }
+          </td>
+        </tr>
+      `;
+    })
+    .join("") || `<tr><td colspan="7">لا توجد قيود</td></tr>`;
+}
+
+async function cancelEntry(id) {
+  if (!confirm("هل تريد إلغاء هذا القيد؟")) return;
+
+  try {
+    await api(`/api/journal-entries/${id}/cancel`, {
+      method: "POST"
+    });
+
+    await refreshAll();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+function renderLedger() {
+  const currentValue = ledgerAccount.value;
+  ledgerAccount.innerHTML = accountOptions();
+
+  if (currentValue) {
+    ledgerAccount.value = currentValue;
+  }
+
+  const accountId = Number(ledgerAccount.value);
+  let balance = 0;
+  const rows = [];
+
+  postedEntries().forEach(entry => {
+    entry.lines
+      .filter(line => line.accountId === accountId)
+      .forEach(line => {
+        balance += Number(line.debit || 0) - Number(line.credit || 0);
+
+        rows.push(`
+          <tr>
+            <td>${entry.date}</td>
+            <td>${entry.number}</td>
+            <td>${line.memo || entry.memo}</td>
+            <td>${money(line.debit)}</td>
+            <td>${money(line.credit)}</td>
+            <td>${money(balance)}</td>
+          </tr>
+        `);
+      });
+  });
+
+  ledgerRows.innerHTML =
+    rows.join("") || `<tr><td colspan="6">لا توجد حركة</td></tr>`;
+}
+
+function renderTrial() {
+  const balances = calculateBalances();
+
+  trialRows.innerHTML = postingAccounts()
+    .map(account => {
+      const movement = balances[account.id] || {
+        debit: 0,
+        credit: 0
+      };
+
+      const net = movement.debit - movement.credit;
+
+      return `
+        <tr>
+          <td>${account.code}</td>
+          <td>${account.name}</td>
+          <td>${money(movement.debit)}</td>
+          <td>${money(movement.credit)}</td>
+          <td>${money(net > 0 ? net : 0)}</td>
+          <td>${money(net < 0 ? -net : 0)}</td>
+        </tr>
+      `;
+    })
+    .join("");
+}
+
+function renderAudit() {
+  auditRows.innerHTML =
+    auditLog
+      .map(item => `
+        <tr>
+          <td>${new Date(item.createdAt).toLocaleString("ar-SA")}</td>
+          <td>${item.action}</td>
+          <td>${item.entity}</td>
+          <td>${item.entityId}</td>
+        </tr>
+      `)
+      .join("") ||
+    `<tr><td colspan="4">لا توجد عمليات</td></tr>`;
+}
+
+document.querySelectorAll(".nav").forEach(button => {
+  button.onclick = () => {
+    document.querySelectorAll(".nav")
+      .forEach(item => item.classList.remove("active"));
+
+    document.querySelectorAll(".page")
+      .forEach(item => item.classList.remove("active"));
+
+    button.classList.add("active");
+    document.getElementById(button.dataset.page).classList.add("active");
+
+    if (button.dataset.page === "ledger") {
+      renderLedger();
+    }
+  };
+});
+
+loginButton.onclick = login;
+logoutButton.onclick = () => {
+  localStorage.removeItem("jadrix_token");
+  location.reload();
+};
+
+accountSearch.oninput = renderAccounts;
+addAccountButton.onclick = addAccount;
+addLineButton.onclick = addJournalLine;
+postEntryButton.onclick = postEntry;
+ledgerAccount.onchange = renderLedger;
+
+entryDate.value = new Date().toISOString().slice(0, 10);
+addJournalLine();
+addJournalLine();
+
+if (token) {
+  startApp();
+}
+</script>
 </body>
 </html>
