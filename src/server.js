@@ -481,9 +481,9 @@ async function handleApi(req, res, url) {
       },
       approve: {
         permission: "APPROVE",
-        allowedStatuses: ["REVIEWED"],
-        newStatus: "APPROVED",
-        auditAction: "APPROVE"
+        allowedStatuses: ["DRAFT"],
+        newStatus: "POSTED",
+        auditAction: "APPROVE_AND_POST"
       },
       post: {
         permission: "POST",
@@ -513,6 +513,17 @@ async function handleApi(req, res, url) {
     };
 
     const config = configurations[action];
+
+    /*
+     * القيود اليومية العادية:
+     * المحاسب يحفظ القيد كمسودة، ثم يعتمد من الشاشة نفسها.
+     * الاعتماد يرحّل القيد آليًا.
+     */
+    if (action === "approve") {
+      config.allowedStatuses = ["DRAFT"];
+      config.newStatus = "POSTED";
+      config.auditAction = "APPROVE_AND_POST";
+    }
 
     const result = transitionEntry({
       db,
