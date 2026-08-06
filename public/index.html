@@ -762,10 +762,29 @@ function createLookupField({
 
   input.addEventListener("input", () => {
     hidden.value = "";
-    render(input.value);
+
+    const query = input.value.trim();
+
+    if (query.length < 2) {
+      filtered = [];
+      activeIndex = -1;
+      results.innerHTML = "";
+      close();
+      return;
+    }
+
+    render(query);
   });
 
-  input.addEventListener("focus", () => render(input.value));
+  input.addEventListener("focus", () => {
+    const query = input.value.trim();
+
+    if (query.length >= 2) {
+      render(query);
+    } else {
+      close();
+    }
+  });
 
   input.addEventListener("keydown", event => {
     const options = results.querySelectorAll(".smart-lookup-item");
@@ -1275,5 +1294,43 @@ select.line-cost::-ms-expand {
 .line-cost-search::-ms-expand,
 .line-project-search::-ms-expand {
   display: none !important;
+}
+</style>
+
+<style id="jadrix-fix-lookup-scrollbar">
+/* منع ظهور شريط تمرير داخل صف القيد */
+#journalLines,
+#journalLines tr,
+#journalLines td {
+  overflow: visible !important;
+}
+
+/* تبقى قائمة البحث مخفية تمامًا حتى بدء الكتابة */
+.smart-lookup-results {
+  display: none !important;
+  overflow-x: hidden !important;
+  scrollbar-width: thin;
+}
+
+.smart-lookup-results.open {
+  display: block !important;
+}
+
+/* منع أي تمرير رأسي مصغر داخل خلايا الجدول */
+.account-cell,
+.cost-cell,
+.project-cell,
+.smart-lookup {
+  overflow: visible !important;
+}
+
+/* ضمان أن حقل البحث مجرد مربع نص */
+.line-account-search,
+.line-cost-search,
+.line-project-search {
+  background-image: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
 }
 </style>
