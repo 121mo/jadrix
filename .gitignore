@@ -1,0 +1,4 @@
+
+# Local backups and runtime files
+backups/
+*.log
