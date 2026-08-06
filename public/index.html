@@ -1334,3 +1334,143 @@ select.line-cost::-ms-expand {
   -moz-appearance: none !important;
 }
 </style>
+
+<style id="jadrix-lookup-overlay-final">
+/* حقل البحث نفسه بدون أي سهم أو مؤشر */
+.smart-lookup-input,
+.line-account-search,
+.line-cost-search,
+.line-project-search {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: none !important;
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+/* منع القائمة من التأثير على حجم الصف أو الجدول */
+.smart-lookup {
+  position: relative !important;
+  overflow: visible !important;
+}
+
+/* النتائج طبقة عائمة فوق بقية العناصر */
+.smart-lookup-results {
+  position: fixed !important;
+  display: none !important;
+  z-index: 999999 !important;
+
+  width: 320px;
+  max-height: 260px;
+
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+
+  background: #101826 !important;
+  border: 1px solid #263852 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,.55) !important;
+}
+
+/* لا تظهر إلا عند وجود نتائج فعلية */
+.smart-lookup-results.open {
+  display: block !important;
+}
+
+/* منع أي شريط تمرير من الظهور داخل الجدول نفسه */
+#journalLines,
+#journalLines tr,
+#journalLines td,
+.account-cell,
+.cost-cell,
+.project-cell {
+  overflow: visible !important;
+}
+
+/* إخفاء شكل شريط تمرير النتائج مع بقاء التمرير بالعجلة */
+.smart-lookup-results {
+  scrollbar-width: none;
+}
+
+.smart-lookup-results::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+</style>
+
+<script id="jadrix-lookup-overlay-position">
+document.addEventListener("input", function (event) {
+  const input = event.target;
+
+  if (!input.matches(
+    ".line-account-search, .line-cost-search, .line-project-search"
+  )) {
+    return;
+  }
+
+  const wrapper = input.closest(".smart-lookup");
+  const results = wrapper?.querySelector(".smart-lookup-results");
+
+  if (!results) return;
+
+  const positionResults = () => {
+    const rect = input.getBoundingClientRect();
+    const width = Math.max(rect.width, 300);
+    const availableBelow = window.innerHeight - rect.bottom;
+    const estimatedHeight = Math.min(results.scrollHeight || 260, 260);
+
+    results.style.width = `${width}px`;
+    results.style.right = "auto";
+    results.style.left = `${rect.left}px`;
+
+    /* تظهر أسفل الحقل إن وجدت مساحة، وإلا فوقه */
+    if (availableBelow >= estimatedHeight + 12) {
+      results.style.top = `${rect.bottom + 6}px`;
+    } else {
+      results.style.top =
+        `${Math.max(8, rect.top - estimatedHeight - 6)}px`;
+    }
+  };
+
+  requestAnimationFrame(positionResults);
+});
+
+document.addEventListener("focusin", function (event) {
+  const input = event.target;
+
+  if (!input.matches(
+    ".line-account-search, .line-cost-search, .line-project-search"
+  )) {
+    return;
+  }
+
+  const updatePosition = () => {
+    const wrapper = input.closest(".smart-lookup");
+    const results = wrapper?.querySelector(".smart-lookup-results");
+
+    if (!results || !results.classList.contains("open")) return;
+
+    const rect = input.getBoundingClientRect();
+    const height = Math.min(results.scrollHeight || 260, 260);
+    const availableBelow = window.innerHeight - rect.bottom;
+
+    results.style.width = `${Math.max(rect.width, 300)}px`;
+    results.style.left = `${rect.left}px`;
+
+    results.style.top =
+      availableBelow >= height + 12
+        ? `${rect.bottom + 6}px`
+        : `${Math.max(8, rect.top - height - 6)}px`;
+  };
+
+  window.addEventListener("scroll", updatePosition, true);
+  window.addEventListener("resize", updatePosition);
+
+  input.addEventListener("blur", () => {
+    window.removeEventListener("scroll", updatePosition, true);
+    window.removeEventListener("resize", updatePosition);
+  }, { once: true });
+});
+</script>
+
