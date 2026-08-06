@@ -384,18 +384,11 @@ function workflowButtons(entry) {
     entry.status === "REVIEWED"
   ) {
     buttons.push(
-      `<button onclick="workflowAction(${entry.id}, 'approve')">اعتماد</button>`
+      `<button class="primary" onclick="workflowAction(${entry.id}, 'approve')">اعتماد وترحيل</button>`
     );
   }
 
-  if (
-    hasPermission("POST") &&
-    entry.status === "APPROVED"
-  ) {
-    buttons.push(
-      `<button class="primary" onclick="workflowAction(${entry.id}, 'post')">ترحيل</button>`
-    );
-  }
+
 
   if (
     hasPermission("REJECT") &&
