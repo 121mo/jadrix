@@ -1,0 +1,197 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "مدير النظام",
+      "email": "admin@jadrix.local",
+      "password": "admin123",
+      "role": "OWNER",
+      "active": true
+    }
+  ],
+  "companies": [
+    {
+      "id": 1,
+      "nameAr": "شركة Jadrix التجريبية",
+      "nameEn": "Jadrix Demo Company",
+      "baseCurrency": "SAR",
+      "active": true
+    }
+  ],
+  "branches": [
+    {
+      "id": 1,
+      "companyId": 1,
+      "nameAr": "الفرع الرئيسي",
+      "nameEn": "Main Branch",
+      "active": true
+    }
+  ],
+  "fiscalYears": [
+    {
+      "id": 1,
+      "companyId": 1,
+      "name": "2026",
+      "startDate": "2026-01-01",
+      "endDate": "2026-12-31",
+      "status": "OPEN"
+    }
+  ],
+  "costCenters": [
+    {
+      "id": 1,
+      "companyId": 1,
+      "code": "CC-001",
+      "name": "الإدارة العامة",
+      "active": true
+    }
+  ],
+  "projects": [
+    {
+      "id": 1,
+      "companyId": 1,
+      "code": "PRJ-001",
+      "name": "مشروع تجريبي",
+      "active": true
+    }
+  ],
+  "accounts": [
+    {
+      "id": 1,
+      "companyId": 1,
+      "code": "1",
+      "name": "الأصول",
+      "parentId": null,
+      "type": "GROUP",
+      "nature": "DEBIT",
+      "active": true,
+      "root": true
+    },
+    {
+      "id": 2,
+      "companyId": 1,
+      "code": "2",
+      "name": "الخصوم",
+      "parentId": null,
+      "type": "GROUP",
+      "nature": "CREDIT",
+      "active": true,
+      "root": true
+    },
+    {
+      "id": 3,
+      "companyId": 1,
+      "code": "3",
+      "name": "حقوق الملكية",
+      "parentId": null,
+      "type": "GROUP",
+      "nature": "CREDIT",
+      "active": true,
+      "root": true
+    },
+    {
+      "id": 4,
+      "companyId": 1,
+      "code": "4",
+      "name": "الإيرادات",
+      "parentId": null,
+      "type": "GROUP",
+      "nature": "CREDIT",
+      "active": true,
+      "root": true
+    },
+    {
+      "id": 5,
+      "companyId": 1,
+      "code": "5",
+      "name": "المصاريف",
+      "parentId": null,
+      "type": "GROUP",
+      "nature": "DEBIT",
+      "active": true,
+      "root": true
+    },
+    {
+      "id": 101,
+      "companyId": 1,
+      "code": "111",
+      "name": "الصندوق",
+      "parentId": 1,
+      "type": "POSTING",
+      "nature": "DEBIT",
+      "active": true,
+      "root": false
+    },
+    {
+      "id": 102,
+      "companyId": 1,
+      "code": "112",
+      "name": "البنوك",
+      "parentId": 1,
+      "type": "POSTING",
+      "nature": "DEBIT",
+      "active": true,
+      "root": false
+    },
+    {
+      "id": 103,
+      "companyId": 1,
+      "code": "113",
+      "name": "العملاء",
+      "parentId": 1,
+      "type": "POSTING",
+      "nature": "DEBIT",
+      "active": true,
+      "root": false
+    },
+    {
+      "id": 201,
+      "companyId": 1,
+      "code": "211",
+      "name": "الموردون",
+      "parentId": 2,
+      "type": "POSTING",
+      "nature": "CREDIT",
+      "active": true,
+      "root": false
+    },
+    {
+      "id": 301,
+      "companyId": 1,
+      "code": "311",
+      "name": "رأس المال",
+      "parentId": 3,
+      "type": "POSTING",
+      "nature": "CREDIT",
+      "active": true,
+      "root": false
+    },
+    {
+      "id": 401,
+      "companyId": 1,
+      "code": "411",
+      "name": "إيرادات المبيعات",
+      "parentId": 4,
+      "type": "POSTING",
+      "nature": "CREDIT",
+      "active": true,
+      "root": false
+    },
+    {
+      "id": 501,
+      "companyId": 1,
+      "code": "511",
+      "name": "مصروفات تشغيلية",
+      "parentId": 5,
+      "type": "POSTING",
+      "nature": "DEBIT",
+      "active": true,
+      "root": false
+    }
+  ],
+  "journalEntries": [],
+  "auditLog": [],
+  "sequences": {
+    "journalEntry": 0
+  }
+}

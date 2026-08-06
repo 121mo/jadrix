@@ -1,81 +1,24 @@
 "use strict";
-
-const http = require("http");
-const fs = require("fs");
-const path = require("path");
-
-const PORT = Number(process.env.PORT || 3001);
-const PUBLIC_DIR = path.resolve(__dirname, "../public");
-
-const mimeTypes = {
-  ".html": "text/html; charset=utf-8",
-  ".css": "text/css; charset=utf-8",
-  ".js": "application/javascript; charset=utf-8",
-  ".json": "application/json; charset=utf-8",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".svg": "image/svg+xml"
-};
-
-function safeFilePath(requestUrl) {
-  const pathname = decodeURIComponent(
-    new URL(requestUrl, "http://localhost").pathname
-  );
-
-  const requestedFile = pathname === "/" ? "index.html" : pathname.slice(1);
-  const normalizedPath = path.normalize(requestedFile);
-  const fullPath = path.resolve(PUBLIC_DIR, normalizedPath);
-
-  if (!fullPath.startsWith(PUBLIC_DIR)) {
-    return null;
-  }
-
-  return fullPath;
+const http=require("http"),fs=require("fs"),path=require("path"),crypto=require("crypto");
+const PORT=Number(process.env.PORT||3001),PUBLIC=path.resolve(__dirname,"../public"),DB=path.resolve(__dirname,"../data/db.json"),sessions=new Map();
+const read=()=>JSON.parse(fs.readFileSync(DB,"utf8"));
+const write=db=>fs.writeFileSync(DB,JSON.stringify(db,null,2));
+const json=(res,status,data)=>{res.writeHead(status,{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"});res.end(JSON.stringify(data));};
+const body=req=>new Promise((resolve,reject)=>{let raw="";req.on("data",c=>raw+=c);req.on("end",()=>{try{resolve(raw?JSON.parse(raw):{});}catch(e){reject(e);}});req.on("error",reject);});
+const auth=(req,res)=>{const h=req.headers.authorization||"",t=h.startsWith("Bearer ")?h.slice(7):"",s=sessions.get(t);if(!s){json(res,401,{error:"UNAUTHORIZED"});return null;}return s;};
+const audit=(db,userId,action,entity,entityId)=>db.auditLog.push({id:Date.now()+Math.random(),userId,action,entity,entityId,createdAt:new Date().toISOString()});
+function validateLines(lines){if(!Array.isArray(lines)||lines.length<2)return"يجب أن يحتوي القيد على سطرين على الأقل";let d=0,c=0;for(const l of lines){const x=Number(l.debit||0),y=Number(l.credit||0);if((x>0&&y>0)||(x<=0&&y<=0))return"كل سطر يجب أن يحتوي مدينًا أو دائنًا فقط";d+=x;c+=y;}if(Math.abs(d-c)>.005)return"القيد غير متوازن";return null;}
+async function api(req,res,url){
+ if(req.method==="POST"&&url.pathname==="/api/login"){const b=await body(req),db=read(),u=db.users.find(x=>x.active&&x.email.toLowerCase()===String(b.email||"").toLowerCase()&&x.password===String(b.password||""));if(!u)return json(res,401,{error:"بيانات الدخول غير صحيحة"});const token=crypto.randomBytes(24).toString("hex");sessions.set(token,{userId:u.id,name:u.name,role:u.role});return json(res,200,{token,user:{id:u.id,name:u.name,email:u.email,role:u.role}});}
+ const s=auth(req,res);if(!s)return;const db=read();
+ if(req.method==="GET"&&url.pathname==="/api/bootstrap")return json(res,200,{user:s,companies:db.companies,branches:db.branches,fiscalYears:db.fiscalYears});
+ if(req.method==="GET"&&url.pathname==="/api/accounts")return json(res,200,db.accounts);
+ if(req.method==="POST"&&url.pathname==="/api/accounts"){const b=await body(req);if(!b.code||!b.name)return json(res,400,{error:"الكود والاسم مطلوبان"});if(db.accounts.some(a=>a.code===b.code))return json(res,409,{error:"كود الحساب مستخدم"});const a={id:Date.now(),companyId:1,code:String(b.code),name:String(b.name),parentId:b.parentId?Number(b.parentId):null,type:b.type==="GROUP"?"GROUP":"POSTING",nature:b.nature==="CREDIT"?"CREDIT":"DEBIT",active:true,root:false};db.accounts.push(a);audit(db,s.userId,"CREATE","ACCOUNT",a.id);write(db);return json(res,201,a);}
+ if(req.method==="GET"&&url.pathname==="/api/journal-entries")return json(res,200,db.journalEntries);
+ if(req.method==="POST"&&url.pathname==="/api/journal-entries"){const b=await body(req),err=validateLines(b.lines);if(err)return json(res,400,{error:err});db.sequences.journalEntry++;const e={id:Date.now(),number:`JE-${String(db.sequences.journalEntry).padStart(6,"0")}`,date:b.date,memo:b.memo||"",status:"POSTED",createdBy:s.userId,createdAt:new Date().toISOString(),cancelledAt:null,lines:b.lines.map(l=>({accountId:Number(l.accountId),memo:String(l.memo||""),debit:Number(l.debit||0),credit:Number(l.credit||0)}))};db.journalEntries.push(e);audit(db,s.userId,"POST","JOURNAL_ENTRY",e.id);write(db);return json(res,201,e);}
+ const m=url.pathname.match(/^\/api\/journal-entries\/(\d+)\/cancel$/);if(req.method==="POST"&&m){const e=db.journalEntries.find(x=>x.id===Number(m[1]));if(!e)return json(res,404,{error:"القيد غير موجود"});e.status="CANCELLED";e.cancelledAt=new Date().toISOString();audit(db,s.userId,"CANCEL","JOURNAL_ENTRY",e.id);write(db);return json(res,200,e);}
+ if(req.method==="GET"&&url.pathname==="/api/audit-log")return json(res,200,db.auditLog.slice().reverse());
+ return json(res,404,{error:"NOT_FOUND"});
 }
-
-const server = http.createServer((request, response) => {
-  const filePath = safeFilePath(request.url);
-
-  if (!filePath) {
-    response.writeHead(403, {
-      "Content-Type": "text/plain; charset=utf-8"
-    });
-    response.end("غير مسموح");
-    return;
-  }
-
-  fs.stat(filePath, (statError, stats) => {
-    if (statError || !stats.isFile()) {
-      response.writeHead(404, {
-        "Content-Type": "text/plain; charset=utf-8"
-      });
-      response.end("الصفحة غير موجودة");
-      return;
-    }
-
-    fs.readFile(filePath, (readError, content) => {
-      if (readError) {
-        response.writeHead(500, {
-          "Content-Type": "text/plain; charset=utf-8"
-        });
-        response.end("حدث خطأ في الخادم");
-        return;
-      }
-
-      const extension = path.extname(filePath).toLowerCase();
-
-      response.writeHead(200, {
-        "Content-Type":
-          mimeTypes[extension] || "application/octet-stream",
-        "Cache-Control": "no-store"
-      });
-
-      response.end(content);
-    });
-  });
-});
-
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Jadrix is running on port ${PORT}`);
-});
+function staticFile(req,res,url){const p=path.resolve(PUBLIC,"."+(url.pathname==="/"?"/index.html":url.pathname));if(!p.startsWith(PUBLIC)){res.writeHead(403);return res.end("Forbidden");}fs.readFile(p,(e,c)=>{if(e){res.writeHead(404);return res.end("Not found");}const ext=path.extname(p),types={".html":"text/html; charset=utf-8",".js":"application/javascript; charset=utf-8",".css":"text/css; charset=utf-8"};res.writeHead(200,{"Content-Type":types[ext]||"application/octet-stream","Cache-Control":"no-store"});res.end(c);});}
+http.createServer(async(req,res)=>{const url=new URL(req.url,"http://localhost");try{url.pathname.startsWith("/api/")?await api(req,res,url):staticFile(req,res,url);}catch(e){console.error(e);json(res,500,{error:"INTERNAL_SERVER_ERROR"});}}).listen(PORT,"0.0.0.0",()=>console.log(`Jadrix v0.4 is running on port ${PORT}`));
