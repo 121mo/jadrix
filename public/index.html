@@ -154,7 +154,14 @@ th,td{padding:9px;border-bottom:1px solid var(--line);text-align:right}
 
     <div class="toolbar">
       <button id="addLineButton">إضافة سطر</button>
-      <button id="postEntryButton" class="primary">حفظ القيد كمسودة</button>
+      <button id="postEntryButton" class="primary">حفظ القيد</button>
+      <button
+        id="approveCurrentEntryButton"
+        class="primary hidden"
+        type="button"
+      >
+        اعتماد القيد
+      </button>
     </div>
     <div id="journalMessage" class="msg"></div>
   </div>
@@ -247,6 +254,8 @@ let bootstrapData = null;
 let accounts = [];
 let entries = [];
 let auditLog = [];
+let currentJournalEntryId = null;
+let currentJournalEntryStatus = null;
 
 const money = value =>
   Number(value || 0).toLocaleString("ar-SA", {
@@ -877,8 +886,10 @@ async function postEntry() {
     .map(row => ({
       accountId: Number(row.querySelector(".line-account").value),
       memo: row.querySelector(".line-memo").value,
-      costCenterId: row.querySelector(".line-cost").value || null,
-      projectId: row.querySelector(".line-project").value || null,
+      costCenterId:
+        row.querySelector(".line-cost").value || null,
+      projectId:
+        row.querySelector(".line-project").value || null,
       debit: Number(
         String(row.querySelector(".line-debit").value || "0")
           .replace(/,/g, "")
@@ -891,7 +902,7 @@ async function postEntry() {
     .filter(line => line.debit || line.credit);
 
   try {
-    await api("/api/journal-entries", {
+    const savedEntry = await api("/api/journal-entries", {
       method: "POST",
       body: JSON.stringify({
         date: entryDate.value,
@@ -904,10 +915,63 @@ async function postEntry() {
       })
     });
 
-    journalMessage.textContent = "تم حفظ القيد كمسودة بنجاح";
+    currentJournalEntryId = savedEntry.id;
+    currentJournalEntryStatus = savedEntry.status;
+
+    journalMessage.textContent =
+      `تم حفظ القيد ${savedEntry.number}. اضغط اعتماد لترحيله.`;
+
     journalMessage.className = "msg ok";
 
+    postEntryButton.disabled = true;
+    approveCurrentEntryButton.classList.remove("hidden");
+
+    await refreshAll();
+  } catch (error) {
+    journalMessage.textContent = error.message;
+    journalMessage.className = "msg";
+  }
+}
+
+async function approveCurrentJournalEntry() {
+  if (!currentJournalEntryId) {
+    alert("احفظ القيد أولًا.");
+    return;
+  }
+
+  if (!confirm("هل تريد اعتماد القيد وترحيله إلى الحسابات؟")) {
+    return;
+  }
+
+  try {
+    const approvedEntry = await api(
+      `/api/journal-entries/${currentJournalEntryId}/approve`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          note: "اعتماد المحاسب والترحيل الآلي"
+        })
+      }
+    );
+
+    currentJournalEntryStatus = approvedEntry.status;
+
+    journalMessage.textContent =
+      `تم اعتماد وترحيل القيد ${approvedEntry.number} بنجاح.`;
+
+    journalMessage.className = "msg ok";
+
+    approveCurrentEntryButton.classList.add("hidden");
+
+    entryMemo.value = "";
+    entryReference.value = "";
     journalLines.innerHTML = "";
+
+    currentJournalEntryId = null;
+    currentJournalEntryStatus = null;
+
+    postEntryButton.disabled = false;
+
     addJournalLine();
     addJournalLine();
 
@@ -1061,6 +1125,7 @@ accountSearch.oninput = renderAccounts;
 addAccountButton.onclick = addAccount;
 addLineButton.onclick = addJournalLine;
 postEntryButton.onclick = postEntry;
+approveCurrentEntryButton.onclick = approveCurrentJournalEntry;
 ledgerAccount.onchange = renderLedger;
 
 entryDate.value = new Date().toISOString().slice(0, 10);
