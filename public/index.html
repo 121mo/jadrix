@@ -623,6 +623,59 @@ function normalizeArabic(text) {
     .trim();
 }
 
+function expandAccountSearch(query) {
+  const normalized = normalizeArabic(query);
+
+  const synonyms = {
+    "مورد": ["مورد", "موردون", "موردين", "supplier", "payable", "دائن"],
+    "عميل": ["عميل", "عملاء", "customer", "receivable", "مدين"],
+    "بنك": ["بنك", "بنوك", "bank"],
+    "صندوق": ["صندوق", "نقدية", "cash", "petty cash"],
+    "مصروف": ["مصروف", "مصروفات", "expense"],
+    "ايراد": ["ايراد", "ايرادات", "revenue", "income"],
+    "ضريبه": ["ضريبه", "ضرائب", "vat", "tax"],
+    "راتب": ["راتب", "رواتب", "salary", "payroll"],
+    "اصل": ["اصل", "اصول", "asset"],
+    "خصم": ["خصم", "withholding"],
+    "راس مال": ["راس مال", "capital", "equity"]
+  };
+
+  const words = [normalized];
+
+  Object.entries(synonyms).forEach(([key, values]) => {
+    if (normalized.includes(normalizeArabic(key))) {
+      values.forEach(value => words.push(normalizeArabic(value)));
+    }
+  });
+
+  return [...new Set(words.filter(Boolean))];
+}
+
+function scoreLookupItem(item, query, searchText) {
+  const terms = expandAccountSearch(query);
+  const code = normalizeArabic(item.code || "");
+  const name = normalizeArabic(item.name || item.nameAr || "");
+  const completeText = normalizeArabic(searchText);
+
+  let score = 0;
+
+  for (const term of terms) {
+    if (!term) continue;
+
+    if (code === term) score += 1000;
+    else if (code.startsWith(term)) score += 850;
+    else if (code.includes(term)) score += 650;
+
+    if (name === term) score += 900;
+    else if (name.startsWith(term)) score += 750;
+    else if (name.includes(term)) score += 500;
+
+    if (completeText.includes(term)) score += 250;
+  }
+
+  return score;
+}
+
 function createLookupField({
   items,
   display,
@@ -666,8 +719,24 @@ function createLookupField({
     const q = normalizeArabic(query);
 
     filtered = items
-      .filter(item => !q || normalizeArabic(search(item)).includes(q))
-      .slice(0, 12);
+      .map(item => ({
+        item,
+        score: q
+          ? scoreLookupItem(item, q, search(item))
+          : 1
+      }))
+      .filter(result => !q || result.score > 0)
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+
+        return String(a.item.code || "").localeCompare(
+          String(b.item.code || ""),
+          undefined,
+          { numeric: true }
+        );
+      })
+      .slice(0, 15)
+      .map(result => result.item);
 
     if (!filtered.length) {
       results.innerHTML =
@@ -754,7 +823,13 @@ function addJournalLine() {
     items: postingAccounts(),
     display: item => `${item.code} - ${item.name}`,
     search: item =>
-      `${item.code} ${item.name} ${item.nature} ${item.type}`,
+      `${item.code} ${item.name} ${item.nameAr || ""} ${item.nameEn || ""}
+       ${item.nature} ${item.type}
+       ${item.nature === "CREDIT" ? "دائن مورد موردون خصوم" : "مدين اصول عميل عملاء"}
+       ${String(item.name || "").includes("بنك") ? "بنوك bank" : ""}
+       ${String(item.name || "").includes("صندوق") ? "نقدية cash" : ""}
+       ${String(item.name || "").includes("مصروف") ? "expense مصروفات" : ""}
+       ${String(item.name || "").includes("إيراد") ? "revenue income ايرادات" : ""}`,
     placeholder: "ابحث بالحساب أو الكود",
     hiddenClass: "line-account",
     inputClass: "line-account-search"
